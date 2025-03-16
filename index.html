@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO List</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Můj TODO List</h1>
+        
+        <nav class="category-nav">
+            <ul>
+                <li><a href="#" class="category-link active" data-category="prioritni">Prioritní</a></li>
+                <li><a href="#" class="category-link" data-category="prace">Práce</a></li>
+                <li><a href="#" class="category-link" data-category="zabava">Zábava</a></li>
+                <li><a href="#" class="category-link completed-category" data-category="hotove">Hotové úkoly</a></li>
+            </ul>
+        </nav>
+        
+        <div class="task-container">
+            <div id="active-category-tasks">
+                <div class="add-task">
+                    <input type="text" id="new-task" placeholder="Zadejte nový úkol...">
+                    <button id="add-task-btn">Přidat</button>
+                </div>
+                <ul id="task-list" class="task-list">
+                    <!-- Tasks will be added here dynamically -->
+                </ul>
+            </div>
+            
+            <div id="completed-subcategories" class="hidden">
+                <h2>Vyberte kategorii hotových úkolů</h2>
+                <div class="completed-categories">
+                    <button class="completed-category-btn" data-category="prioritni">Prioritní</button>
+                    <button class="completed-category-btn" data-category="prace">Práce</button>
+                    <button class="completed-category-btn" data-category="zabava">Zábava</button>
+                </div>
+                <ul id="completed-task-list" class="task-list">
+                    <!-- Completed tasks will be added here dynamically -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,156 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    padding: 20px;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+h2 {
+    margin-bottom: 15px;
+    color: #444;
+}
+
+.category-nav ul {
+    display: flex;
+    list-style-type: none;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.category-nav li {
+    flex: 1;
+    text-align: center;
+}
+
+.category-link {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.category-link.active {
+    color: #4285f4;
+    border-bottom: 2px solid #4285f4;
+}
+
+.category-link:hover {
+    background-color: #f9f9f9;
+}
+
+.category-link.completed-category {
+    color: #0f9d58;
+}
+
+.add-task {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+#new-task {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px 0 0 4px;
+    font-size: 16px;
+}
+
+#add-task-btn {
+    padding: 10px 15px;
+    background-color: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 0 4px 4px 0;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+#add-task-btn:hover {
+    background-color: #3367d6;
+}
+
+.task-list {
+    list-style-type: none;
+}
+
+.task-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.task-item:hover {
+    background-color: #f5f5f5;
+}
+
+.task-text {
+    cursor: pointer;
+}
+
+.completed {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.delete-btn {
+    color: #ea4335;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0 5px;
+}
+
+.hidden {
+    display: none;
+}
+
+.completed-categories {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.completed-category-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background-color: #f1f1f1;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #444;
+}
+
+.completed-category-btn:hover {
+    background-color: #e4e4e4;
+}
+
+.completed-category-btn.active {
+    background-color: #0f9d58;
+    color: white;
+}
