@@ -501,6 +501,27 @@ h4 {
     color: white;
 }
 
+.completed-actions {
+    margin: 15px 0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.danger-btn {
+    background-color: var(--delete-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+
+.danger-btn:hover {
+    opacity: 0.9;
+}
+
 /* Archive styles */
 .archive-section {
     margin-top: 30px;

@@ -547,6 +547,40 @@ function deleteCompletedTask(category, index) {
 }
 
 /**
+ * Smazání všech dokončených úkolů v kategorii
+ *
+ * Odstraní všechny dokončené úkoly v aktuálně zobrazené kategorii.
+ * Před smazáním si vyžádá potvrzení uživatele.
+ */
+function deleteAllCompletedTasks() {
+    // Získat aktuální kategorii
+    const category = activeCompletedCategory;
+    
+    // Zkontrolovat, zda existují nějaké úkoly k odstranění
+    if (!todoList.hotove[category] || todoList.hotove[category].length === 0) {
+        alert('V této kategorii nejsou žádné hotové úkoly k odstranění.');
+        return;
+    }
+    
+    // Vyžádat potvrzení od uživatele s informací o počtu úkolů
+    const taskCount = todoList.hotove[category].length;
+    const confirmation = confirm(`Opravdu chcete smazat všech ${taskCount} hotových úkolů v kategorii "${getCategoryDisplayName(category)}"?`);
+    
+    if (confirmation) {
+        // Vyprázdnit pole dokončených úkolů pro danou kategorii
+        todoList.hotove[category] = [];
+        
+        // Uložit změny
+        saveTasksToStorage();
+        
+        // Aktualizovat zobrazení
+        displayCompletedTasks(category);
+        
+        alert(`Smazáno ${taskCount} hotových úkolů.`);
+    }
+}
+
+/**
  * Označení úkolu jako dokončeného
  * 
  * Přesune úkol z aktivní kategorie do sekce dokončených úkolů
@@ -1521,6 +1555,12 @@ function setupAdditionalEventListeners() {
         archiveEnabledCheckbox.addEventListener('change', () => {
             saveTasksToStorage();
         });
+    }
+    
+    // Delete all completed tasks button
+    const deleteAllCompletedBtn = document.getElementById('delete-all-completed-btn');
+    if (deleteAllCompletedBtn) {
+        deleteAllCompletedBtn.addEventListener('click', deleteAllCompletedTasks);
     }
     
     // Initial color selectors
