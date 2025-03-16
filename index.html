@@ -10,7 +10,10 @@
     <div class="container">
         <div class="header-row">
             <h1>Můj TODO List</h1>
-            <button id="theme-toggle" class="theme-toggle">🌙</button>
+            <div class="header-buttons">
+                <button id="theme-toggle" class="theme-toggle">🌙</button>
+                <button id="settings-toggle" class="settings-toggle">⚙️</button>
+            </div>
         </div>
         
         <nav class="category-nav">
@@ -20,18 +23,12 @@
                 <li><a href="#" class="category-link" data-category="zabava">Zábava</a></li>
                 <li><a href="#" class="category-link completed-category" data-category="hotove">Hotové úkoly</a></li>
             </ul>
-            <div class="category-management">
-                <input type="text" id="new-category" placeholder="Nová kategorie...">
-                <button id="add-category-btn">+</button>
-                <button id="remove-category-btn">-</button>
-            </div>
         </nav>
         
         <div class="task-container">
             <div id="active-category-tasks">
                 <div class="add-task">
                     <div class="color-selector">
-                        <button class="color-btn" data-color="#ffffff" style="background-color: #ffffff;"></button>
                         <button class="color-btn" data-color="#ffcccb" style="background-color: #ffcccb;"></button>
                         <button class="color-btn" data-color="#c1e1c1" style="background-color: #c1e1c1;"></button>
                         <button class="color-btn" data-color="#c4c3d0" style="background-color: #c4c3d0;"></button>
@@ -43,7 +40,7 @@
                     <button id="add-task-btn">Přidat</button>
                 </div>
                 <div class="task-detail-area">
-                    <textarea id="task-detail" placeholder="Detail úkolu (nepovinné)..."></textarea>
+                    <textarea id="task-detail" placeholder="Detail úkolu (nepovinné)..." rows="2"></textarea>
                 </div>
                 <ul id="task-list" class="task-list">
                     <!-- Tasks will be added here dynamically -->
@@ -75,8 +72,36 @@
                 <div id="modal-date-completed" class="hidden">Dokončeno: <span></span></div>
             </div>
             <div id="modal-task-detail">
-                <h3>Detail:</h3>
                 <p id="modal-detail-text"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modální okno pro nastavení -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Nastavení</h2>
+            
+            <div class="settings-section">
+                <h3>Správa kategorií</h3>
+                <div class="category-management">
+                    <input type="text" id="new-category" placeholder="Nová kategorie...">
+                    <button id="add-category-btn">Přidat</button>
+                </div>
+                <div class="category-list-container">
+                    <h4>Existující kategorie:</h4>
+                    <ul id="settings-category-list" class="settings-categories">
+                        <!-- Kategorie se načtou dynamicky -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Výběr barev pro úkoly</h3>
+                <div class="color-palette">
+                    <!-- Barvy budou přidány dynamicky -->
+                </div>
             </div>
         </div>
     </div>
