@@ -15,6 +15,7 @@ const categoryLinks = document.querySelectorAll('.category-link');
 const taskList = document.getElementById('task-list');
 const completedTaskList = document.getElementById('completed-task-list');
 const newTaskInput = document.getElementById('new-task');
+const taskDueDateInput = document.getElementById('task-due-date');
 const addTaskBtn = document.getElementById('add-task-btn');
 const activeCategoryTasks = document.getElementById('active-category-tasks');
 const completedSubcategories = document.getElementById('completed-subcategories');
@@ -113,16 +114,45 @@ function displayTasks(category) {
     taskList.innerHTML = '';
     
     if (todoList[category] && todoList[category].length > 0) {
+        // Check if we need to migrate old format data
+        if (typeof todoList[category][0] === 'string') {
+            todoList[category] = todoList[category].map(taskText => ({
+                text: taskText,
+                dueDate: null,
+                createdAt: new Date().toISOString()
+            }));
+            saveTasksToStorage();
+        }
+        
         todoList[category].forEach((task, index) => {
             const li = document.createElement('li');
             li.className = 'task-item';
+            
+            // Format due date if it exists
+            let dueDateHTML = '';
+            if (task.dueDate) {
+                const dueDate = new Date(task.dueDate);
+                const today = new Date();
+                const isOverdue = dueDate < today && dueDate.toDateString() !== today.toDateString();
+                const formattedDate = new Intl.DateTimeFormat('cs-CZ', { 
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                }).format(dueDate);
+                
+                dueDateHTML = `<div class="task-due-date ${isOverdue ? 'overdue' : ''}">Termín: ${formattedDate}</div>`;
+            }
+            
             li.innerHTML = `
-                <span class="task-text">${task}</span>
+                <div class="task-content">
+                    <div class="task-text">${task.text}</div>
+                    ${dueDateHTML}
+                </div>
                 <button class="delete-btn">✕</button>
             `;
             
             // Add event listener to mark task as completed on double click
-            li.querySelector('.task-text').addEventListener('dblclick', () => {
+            li.querySelector('.task-content').addEventListener('dblclick', () => {
                 completeTask(category, index);
             });
             
@@ -141,11 +171,48 @@ function displayCompletedTasks(category) {
     completedTaskList.innerHTML = '';
     
     if (todoList.hotove[category] && todoList.hotove[category].length > 0) {
+        // Check if we need to migrate old format data
+        if (typeof todoList.hotove[category][0] === 'string') {
+            todoList.hotove[category] = todoList.hotove[category].map(taskText => ({
+                text: taskText,
+                dueDate: null,
+                createdAt: new Date().toISOString(),
+                completedAt: new Date().toISOString()
+            }));
+            saveTasksToStorage();
+        }
+        
         todoList.hotove[category].forEach((task, index) => {
             const li = document.createElement('li');
             li.className = 'task-item';
+            
+            // Format due date if it exists
+            let dueDateHTML = '';
+            if (task.dueDate) {
+                const dueDate = new Date(task.dueDate);
+                const formattedDate = new Intl.DateTimeFormat('cs-CZ', { 
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                }).format(dueDate);
+                
+                dueDateHTML = `<div class="task-due-date">Termín: ${formattedDate}</div>`;
+            }
+            
+            // Format completion date
+            const completedDate = task.completedAt ? new Date(task.completedAt) : new Date();
+            const formattedCompletionDate = new Intl.DateTimeFormat('cs-CZ', { 
+                day: 'numeric', 
+                month: 'long',
+                year: 'numeric'
+            }).format(completedDate);
+            
             li.innerHTML = `
-                <span class="task-text completed">${task}</span>
+                <div class="task-content">
+                    <div class="task-text completed">${task.text}</div>
+                    ${dueDateHTML}
+                    <div class="task-due-date">Dokončeno: ${formattedCompletionDate}</div>
+                </div>
                 <button class="delete-btn">✕</button>
             `;
             
@@ -155,7 +222,7 @@ function displayCompletedTasks(category) {
             });
             
             // Add event listener to restore task on double click
-            li.querySelector('.task-text').addEventListener('dblclick', () => {
+            li.querySelector('.task-content').addEventListener('dblclick', () => {
                 restoreTask(category, index);
             });
             
@@ -167,12 +234,20 @@ function displayCompletedTasks(category) {
 // Add new task
 function addNewTask() {
     const taskText = newTaskInput.value.trim();
+    const dueDate = taskDueDateInput.value;
     
     if (taskText !== '' && activeCategory !== 'hotove') {
-        todoList[activeCategory].push(taskText);
+        const taskObj = {
+            text: taskText,
+            dueDate: dueDate || null,
+            createdAt: new Date().toISOString()
+        };
+        
+        todoList[activeCategory].push(taskObj);
         saveTasksToStorage();
         displayTasks(activeCategory);
         newTaskInput.value = '';
+        taskDueDateInput.value = '';
     }
 }
 
@@ -192,8 +267,11 @@ function deleteCompletedTask(category, index) {
 
 // Complete task
 function completeTask(category, index) {
-    // Get task text
+    // Get task
     const task = todoList[category][index];
+    
+    // Add completion timestamp
+    task.completedAt = new Date().toISOString();
     
     // Add to completed tasks
     todoList.hotove[category].push(task);
@@ -208,8 +286,13 @@ function completeTask(category, index) {
 
 // Restore task
 function restoreTask(category, index) {
-    // Get task text
+    // Get task
     const task = todoList.hotove[category][index];
+    
+    // Remove completion timestamp if exists
+    if (task.completedAt) {
+        delete task.completedAt;
+    }
     
     // Add back to original category
     todoList[category].push(task);
