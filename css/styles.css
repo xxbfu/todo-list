@@ -622,7 +622,7 @@ h4 {
     gap: 10px;
 }
 
-#archive-days {
+#archive-days, #delete-days {
     width: 80px;
     padding: 8px;
     border: 1px solid var(--border-color);

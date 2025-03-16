@@ -1,46 +1,95 @@
-// Task data structure
+/**
+ * Todo List Application - JavaScript
+ * 
+ * Aplikace pro správu úkolů s podporou kategorií, barevného označení, termínů, archivace a přizpůsobení.
+ * 
+ * Funkce aplikace:
+ * - Správa úkolů v různých kategoriích
+ * - Možnost vytvářet a mazat vlastní kategorie
+ * - Barevné odlišení úkolů
+ * - Nastavení termínů úkolů s vizuálním odlišením zpožděných
+ * - Detail úkolů a možnost zobrazení podrobností
+ * - Archivační systém pro staré úkoly s možností nastavení období
+ * - Přizpůsobitelné rozhraní včetně tmavého režimu
+ * - Perzistence nastavení a dat v prohlížeči
+ */
+
+/**
+ * Hlavní datová struktura aplikace
+ * 
+ * Obsahuje všechny úkoly rozdělené podle kategorií, dokončené úkoly,
+ * archivované úkoly a nastavení aplikace.
+ */
 const todoList = {
-    prioritni: [],
-    prace: [],
-    zabava: [],
-    hotove: {
+    prioritni: [],          // Kategorie "Prioritní" úkoly
+    prace: [],              // Kategorie "Práce" úkoly
+    zabava: [],             // Kategorie "Zábava" úkoly
+    hotove: {               // Dokončené úkoly rozdělené podle kategorií
         prioritni: [],
         prace: [],
         zabava: []
     },
-    archiv: {}, // Archiv smazaných kategorií
-    categoryOrder: ['prioritni', 'prace', 'zabava'] // Pořadí kategorií
+    archiv: {},             // Archiv smazaných kategorií a starých úkolů
+    categoryOrder: ['prioritni', 'prace', 'zabava'] // Pořadí kategorií v menu
 };
 
-// DOM Elements
-const categoryLinks = document.querySelectorAll('.category-link');
-const categoryList = document.getElementById('category-list');
-const taskList = document.getElementById('task-list');
-const completedTaskList = document.getElementById('completed-task-list');
-const newTaskInput = document.getElementById('new-task');
-const taskDueDateInput = document.getElementById('task-due-date');
-const taskDetailInput = document.getElementById('task-detail');
-const addTaskBtn = document.getElementById('add-task-btn');
-const activeCategoryTasks = document.getElementById('active-category-tasks');
-const completedSubcategories = document.getElementById('completed-subcategories');
-const completedCategoryBtns = document.querySelectorAll('.completed-category-btn');
-const newCategoryInput = document.getElementById('new-category');
-const addCategoryBtn = document.getElementById('add-category-btn');
-const themeToggleBtn = document.getElementById('theme-toggle');
-const settingsToggleBtn = document.getElementById('settings-toggle');
-const colorBtns = document.querySelectorAll('.color-btn');
-const taskDetailModal = document.getElementById('task-detail-modal');
-const settingsModal = document.getElementById('settings-modal');
-const closeModalBtns = document.querySelectorAll('.close-modal');
-const settingsCategoryList = document.getElementById('settings-category-list');
-const colorPalette = document.querySelector('.color-palette');
+/**
+ * Reference na DOM elementy aplikace
+ * 
+ * Všechny důležité HTML elementy, se kterými JavaScript pracuje.
+ * Toto zajišťuje rychlejší přístup k elementům bez nutnosti
+ * opakovaného vyhledávání v DOM.
+ */
 
-// Current active category
-let activeCategory = 'prioritni';
-let activeCompletedCategory = 'prioritni';
-let selectedColor = '';
+// Elementy pro správu kategorií
+const categoryLinks = document.querySelectorAll('.category-link');      // Odkazy na kategorie v hlavním menu
+const categoryList = document.getElementById('category-list');          // Seznam kategorií v hlavním menu
+const activeCategoryTasks = document.getElementById('active-category-tasks'); // Kontejner pro aktivní kategorie
+const newCategoryInput = document.getElementById('new-category');       // Pole pro zadání nové kategorie
+const addCategoryBtn = document.getElementById('add-category-btn');     // Tlačítko pro přidání kategorie
 
-// Definice 20 barev pro paletu
+// Elementy pro správu úkolů
+const taskList = document.getElementById('task-list');                  // Seznam úkolů aktivní kategorie
+const newTaskInput = document.getElementById('new-task');               // Pole pro zadání nového úkolu
+const taskDueDateInput = document.getElementById('task-due-date');      // Pole pro zadání termínu
+const taskDetailInput = document.getElementById('task-detail');         // Pole pro detail úkolu
+const addTaskBtn = document.getElementById('add-task-btn');             // Tlačítko pro přidání úkolu
+
+// Elementy pro hotové úkoly
+const completedTaskList = document.getElementById('completed-task-list'); // Seznam hotových úkolů
+const completedSubcategories = document.getElementById('completed-subcategories'); // Kontejner hotových úkolů
+const completedCategoryBtns = document.querySelectorAll('.completed-category-btn'); // Tlačítka kategorií hotových úkolů
+
+// Elementy pro nastavení a vzhled
+const themeToggleBtn = document.getElementById('theme-toggle');         // Přepínač tmavého režimu
+const settingsToggleBtn = document.getElementById('settings-toggle');   // Tlačítko nastavení
+const colorBtns = document.querySelectorAll('.color-btn');              // Tlačítka výběru barvy
+const settingsCategoryList = document.getElementById('settings-category-list'); // Seznam kategorií v nastavení
+const colorPalette = document.querySelector('.color-palette');          // Barevná paleta v nastavení
+
+// Modální okna
+const taskDetailModal = document.getElementById('task-detail-modal');   // Modální okno detailu úkolu
+const settingsModal = document.getElementById('settings-modal');        // Modální okno nastavení
+const closeModalBtns = document.querySelectorAll('.close-modal');       // Tlačítka pro zavření modálních oken
+
+/**
+ * Stavové proměnné aplikace
+ * 
+ * Uchovávají informace o aktuálním stavu aplikace jako je
+ * aktivní kategorie, vybraná barva a další.
+ */
+let activeCategory = 'prioritni';           // Aktuálně zobrazená kategorie
+let activeCompletedCategory = 'prioritni';  // Aktuálně zobrazená kategorie hotových úkolů
+let selectedColor = '';                     // Aktuálně vybraná barva pro nové úkoly
+let editingColorPosition = 0;               // Aktuálně editovaná pozice barvy (0-4) v nastavení
+
+/**
+ * Barevné palety a nastavení barev
+ * 
+ * Definice barev pro uživatelské rozhraní a barevné označení úkolů.
+ */
+ 
+// Kompletní barevná paleta (20 barev) dostupná v nastavení
 const colorPalettes = [
     '#FF6B6B', '#FF8787', '#FFA8A8', '#FFB8B8', // červené
     '#74C0FC', '#A5D8FF', '#C5F6FA', '#66D9E8', // modré
@@ -50,32 +99,42 @@ const colorPalettes = [
 ];
 
 // Aktivní barvy pro úkoly (5 barev, poslední vždy prázdná)
+// Uživatel může měnit první 4 barvy, poslední je vždy bez barvy
 const taskColors = [
     '#ff6b6b', '#74c0fc', '#8ce99a', '#ffd43b', ''
 ];
 
-// Aktuálně editovaná pozice barvy (1-5)
-let editingColorPosition = 0;
-
-// Initialize app
+/**
+ * Inicializace aplikace
+ * 
+ * Provádí počáteční nastavení aplikace včetně načtení dat z localStorage,
+ * zobrazení úkolů a nastavení všech event listenerů.
+ */
 function init() {
-    // Load tasks from localStorage if available
+    // Načtení úkolů a nastavení z localStorage
     loadTasksFromStorage();
     
-    // Display tasks for default category
+    // Zobrazení úkolů ve výchozí kategorii
     displayTasks(activeCategory);
     
-    // Set up event listeners
+    // Nastavení všech event listenerů
     setupEventListeners();
 }
 
-// Load tasks from localStorage
+/**
+ * Načtení dat z localStorage
+ * 
+ * Obnoví veškerá uložená data aplikace včetně úkolů, kategorií,
+ * nastavení a uživatelských preferencí.
+ */
 function loadTasksFromStorage() {
+    // Načtení hlavní datové struktury
     const savedTasks = localStorage.getItem('todoList');
     if (savedTasks) {
         const parsedTasks = JSON.parse(savedTasks);
         
-        // Ensure critical properties exist
+        // Zajištění existence kritických vlastností
+        // Pokud neexistují, nastaví se výchozí hodnoty
         if (!parsedTasks.archiv) {
             parsedTasks.archiv = {};
         }
@@ -84,10 +143,11 @@ function loadTasksFromStorage() {
             parsedTasks.categoryOrder = ['prioritni', 'prace', 'zabava'];
         }
         
+        // Sloučení načtených dat s aktuálním stavem
         Object.assign(todoList, parsedTasks);
     }
     
-    // Ensure interval settings are loaded
+    // Načtení nastavení archivace
     const archiveDays = localStorage.getItem('archiveDays');
     if (archiveDays) {
         const daysElement = document.getElementById('archive-days');
@@ -96,6 +156,7 @@ function loadTasksFromStorage() {
         }
     }
     
+    // Načtení nastavení trvalého mazání z archivu
     const deleteDays = localStorage.getItem('deleteDays');
     if (deleteDays) {
         const deleteDaysElement = document.getElementById('delete-days');
@@ -104,6 +165,7 @@ function loadTasksFromStorage() {
         }
     }
     
+    // Načtení stavu zapnutí/vypnutí archivace
     const archiveEnabled = localStorage.getItem('archiveEnabled');
     if (archiveEnabled !== null) {
         const enabledElement = document.getElementById('archive-enabled');
@@ -113,50 +175,65 @@ function loadTasksFromStorage() {
     }
 }
 
-// Save tasks to localStorage
+/**
+ * Uložení dat do localStorage
+ * 
+ * Ukládá veškerá data aplikace včetně úkolů, kategorií,
+ * nastavení a uživatelských preferencí.
+ */
 function saveTasksToStorage() {
+    // Uložení kompletní datové struktury
     localStorage.setItem('todoList', JSON.stringify(todoList));
     
-    // Save archiving settings
+    // Uložení nastavení archivace
     const daysElement = document.getElementById('archive-days');
     if (daysElement) {
         localStorage.setItem('archiveDays', daysElement.value);
     }
     
+    // Uložení nastavení trvalého mazání z archivu
     const deleteDaysElement = document.getElementById('delete-days');
     if (deleteDaysElement) {
         localStorage.setItem('deleteDays', deleteDaysElement.value);
     }
     
+    // Uložení stavu zapnutí/vypnutí archivace
     const archiveEnabledElement = document.getElementById('archive-enabled');
     if (archiveEnabledElement) {
         localStorage.setItem('archiveEnabled', archiveEnabledElement.checked);
     }
 }
 
-// Set up event listeners
+/**
+ * Nastavení základních event listenerů
+ * 
+ * Připojuje event listenery ke všem prvkům uživatelského rozhraní,
+ * jako jsou tlačítka, položky menu, formuláře a další interaktivní prvky.
+ */
 function setupEventListeners() {
-    // Category navigation
+    // Navigace mezi kategoriemi
     categoryLinks.forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
             const category = link.getAttribute('data-category');
             
-            // Remove active class from all links
+            // Odstranění třídy active ze všech odkazů
             categoryLinks.forEach(link => link.classList.remove('active'));
             
-            // Add active class to clicked link
+            // Přidání třídy active na kliknutý odkaz
             link.classList.add('active');
             
-            // Update active category and display tasks
+            // Aktualizace aktivní kategorie
             activeCategory = category;
             
-            // Show appropriate view based on category
+            // Zobrazení odpovídajícího pohledu dle kategorie
             if (category === 'hotove') {
+                // Přepnutí na zobrazení hotových úkolů
                 activeCategoryTasks.classList.add('hidden');
                 completedSubcategories.classList.remove('hidden');
                 displayCompletedTasks(activeCompletedCategory);
             } else {
+                // Zobrazení aktivních úkolů vybrané kategorie
                 activeCategoryTasks.classList.remove('hidden');
                 completedSubcategories.classList.add('hidden');
                 displayTasks(category);
@@ -164,27 +241,27 @@ function setupEventListeners() {
         });
     });
     
-    // Completed category buttons
+    // Tlačítka kategorií dokončených úkolů
     completedCategoryBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const category = btn.getAttribute('data-category');
             
-            // Remove active class from all buttons
+            // Odstranění třídy active ze všech tlačítek
             completedCategoryBtns.forEach(btn => btn.classList.remove('active'));
             
-            // Add active class to clicked button
+            // Přidání třídy active na kliknuté tlačítko
             btn.classList.add('active');
             
-            // Update active completed category and display tasks
+            // Aktualizace aktivní kategorie dokončených úkolů
             activeCompletedCategory = category;
             displayCompletedTasks(category);
         });
     });
     
-    // Add new task
+    // Tlačítko přidání nového úkolu
     addTaskBtn.addEventListener('click', addNewTask);
     
-    // Add task on Enter key press
+    // Přidání úkolu po stisku klávesy Enter
     newTaskInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             addNewTask();
@@ -192,19 +269,29 @@ function setupEventListeners() {
     });
 }
 
-// Display tasks for active category
+/**
+ * Zobrazení úkolů aktivní kategorie
+ * 
+ * Načítá a zobrazuje všechny úkoly vybrané kategorie, včetně jejich
+ * detailů, termínů a barevného označení.
+ * 
+ * @param {string} category - Klíč kategorie, jejíž úkoly se mají zobrazit
+ */
 function displayTasks(category) {
+    // Vyčištění seznamu úkolů
     taskList.innerHTML = '';
     
+    // Kontrola existence úkolů v dané kategorii
     if (todoList[category] && todoList[category].length > 0) {
-        // Check if we need to migrate old format data
+        // Kontrola, zda je třeba migrovat starý formát dat (zpětná kompatibilita)
         if (typeof todoList[category][0] === 'string') {
+            // Migrace z jednoduchého textového formátu na formát objektu
             todoList[category] = todoList[category].map(taskText => ({
-                text: taskText,
-                dueDate: null,
-                detail: null,
-                color: '',
-                createdAt: new Date().toISOString()
+                text: taskText,        // Text úkolu
+                dueDate: null,         // Žádný termín
+                detail: null,          // Žádný detail
+                color: '',             // Žádná barva
+                createdAt: new Date().toISOString() // Čas vytvoření
             }));
             saveTasksToStorage();
         }
@@ -372,29 +459,44 @@ function displayCompletedTasks(category) {
     }
 }
 
-// Add new task
+/**
+ * Přidání nového úkolu
+ * 
+ * Získá data z formuláře a vytvoří nový úkol v aktivní kategorii.
+ * Poté formulář vyčistí a aktualizuje zobrazení úkolů.
+ */
 function addNewTask() {
+    // Získání hodnot z formuláře
     const taskText = newTaskInput.value.trim();
     const dueDate = taskDueDateInput.value;
     const taskDetail = taskDetailInput.value.trim();
     
+    // Kontrola validního textu úkolu a aktivní kategorie
     if (taskText !== '' && activeCategory !== 'hotove') {
+        // Vytvoření nového objektu úkolu
         const taskObj = {
-            text: taskText,
-            dueDate: dueDate || null,
-            detail: taskDetail || null,
-            color: selectedColor,
-            createdAt: new Date().toISOString()
+            text: taskText,                     // Text úkolu
+            dueDate: dueDate || null,           // Termín (pokud zadán)
+            detail: taskDetail || null,         // Detail (pokud zadán)
+            color: selectedColor,               // Vybraná barva
+            createdAt: new Date().toISOString() // Časové razítko vytvoření
         };
         
+        // Přidání úkolu do aktuální kategorie
         todoList[activeCategory].push(taskObj);
+        
+        // Uložení do localStorage
         saveTasksToStorage();
+        
+        // Aktualizace zobrazení
         displayTasks(activeCategory);
+        
+        // Vyčištění formuláře
         newTaskInput.value = '';
         taskDueDateInput.value = '';
         taskDetailInput.value = '';
         
-        // Reset color selection
+        // Reset výběru barvy
         colorBtns.forEach(btn => {
             if (btn.dataset.color === '') {
                 btn.classList.add('active');
@@ -406,56 +508,96 @@ function addNewTask() {
     }
 }
 
-// Delete task
+/**
+ * Smazání úkolu
+ * 
+ * Odstraní úkol z aktivní kategorie a aktualizuje zobrazení.
+ * 
+ * @param {string} category - Kategorie úkolu
+ * @param {number} index - Index úkolu v poli kategorie
+ */
 function deleteTask(category, index) {
+    // Odstranění úkolu z pole
     todoList[category].splice(index, 1);
+    
+    // Uložení změn
     saveTasksToStorage();
+    
+    // Aktualizace zobrazení
     displayTasks(category);
 }
 
-// Delete completed task
+/**
+ * Smazání dokončeného úkolu
+ * 
+ * Odstraní úkol z dokončených úkolů vybrané kategorie.
+ * 
+ * @param {string} category - Kategorie dokončeného úkolu
+ * @param {number} index - Index úkolu v poli dokončených úkolů
+ */
 function deleteCompletedTask(category, index) {
+    // Odstranění úkolu z pole dokončených úkolů
     todoList.hotove[category].splice(index, 1);
+    
+    // Uložení změn
     saveTasksToStorage();
+    
+    // Aktualizace zobrazení
     displayCompletedTasks(category);
 }
 
-// Complete task
+/**
+ * Označení úkolu jako dokončeného
+ * 
+ * Přesune úkol z aktivní kategorie do sekce dokončených úkolů
+ * a přidá časové razítko dokončení.
+ * 
+ * @param {string} category - Kategorie úkolu
+ * @param {number} index - Index úkolu v poli kategorie
+ */
 function completeTask(category, index) {
-    // Get task
+    // Získání reference na úkol
     const task = todoList[category][index];
     
-    // Add completion timestamp
+    // Přidání časového razítka dokončení
     task.completedAt = new Date().toISOString();
     
-    // Add to completed tasks
+    // Přidání úkolu do dokončených
     todoList.hotove[category].push(task);
     
-    // Remove from active tasks
+    // Odstranění z aktivních úkolů
     todoList[category].splice(index, 1);
     
-    // Save and refresh display
+    // Uložení změn a aktualizace zobrazení
     saveTasksToStorage();
     displayTasks(category);
 }
 
-// Restore task
+/**
+ * Obnovení dokončeného úkolu
+ * 
+ * Přesune úkol z dokončených zpět do aktivní kategorie
+ * a odstraní časové razítko dokončení.
+ * 
+ * @param {string} category - Kategorie úkolu
+ * @param {number} index - Index úkolu v poli dokončených úkolů
+ */
 function restoreTask(category, index) {
-    // Get task
+    // Získání reference na úkol
     const task = todoList.hotove[category][index];
     
-    // Remove completion timestamp if exists
+    // Odstranění časového razítka dokončení
     if (task.completedAt) {
         delete task.completedAt;
     }
     
-    // Add back to original category
+    // Přidání zpět do původní kategorie
     todoList[category].push(task);
     
-    // Remove from completed tasks
+    // Odstranění z dokončených úkolů
     todoList.hotove[category].splice(index, 1);
     
-    // Save and refresh display
+    // Uložení změn a aktualizace zobrazení
     saveTasksToStorage();
     displayCompletedTasks(category);
 }
@@ -666,7 +808,8 @@ function updateSettingsCategoryList() {
     settingsCategoryList.innerHTML = '';
     
     Object.keys(todoList).forEach(category => {
-        if (category !== 'hotove') {
+        // Přeskočit speciální kategorie (hotove, archiv, categoryOrder)
+        if (category !== 'hotove' && category !== 'archiv' && category !== 'categoryOrder') {
             const li = document.createElement('li');
             li.className = 'settings-category-item';
             li.draggable = true;
@@ -691,7 +834,8 @@ function updateSettingsCategoryList() {
                 
                 if (confirm(`Opravdu chcete odstranit kategorii "${displayName}"? Všechny úkoly budou přesunuty do archivu.`)) {
                     removeCategory(category);
-                    updateSettingsCategoryList();
+                    // Okamžitě odstranit položku ze seznamu (nečekat na nové otevření modálního okna)
+                    li.parentNode.removeChild(li);
                 }
             });
             
