@@ -533,6 +533,11 @@ h4 {
     margin-bottom: 15px;
 }
 
+.archived-category-wrapper {
+    position: relative;
+    display: inline-flex;
+}
+
 .archived-category-btn {
     padding: 8px 12px;
     background-color: var(--btn-bg);
@@ -540,6 +545,7 @@ h4 {
     border-radius: 4px;
     cursor: pointer;
     color: var(--text-color);
+    padding-right: 26px; /* Space for delete button */
 }
 
 .archived-category-btn.active {
@@ -547,11 +553,57 @@ h4 {
     color: white;
 }
 
+.archived-category-delete-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 16px;
+    height: 16px;
+    background-color: transparent;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 2;
+}
+
+.archived-category-btn.active + .archived-category-delete-btn {
+    color: white;
+}
+
+.archived-category-delete-btn:hover {
+    color: var(--delete-color);
+}
+
 /* Archive settings styles */
 .archive-settings {
     padding: 15px;
     background-color: var(--hover-bg);
     border-radius: 4px;
+}
+
+.archive-option {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.archive-option input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--accent-color);
+}
+
+.archive-option label {
+    font-weight: 500;
+    cursor: pointer;
 }
 
 .archive-interval {
@@ -586,9 +638,12 @@ h4 {
 
 .archive-actions {
     margin-top: 15px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 
-#archive-now-btn {
+#archive-now-btn, #delete-archived-btn {
     padding: 8px 15px;
     background-color: var(--accent-color);
     color: white;
@@ -599,7 +654,11 @@ h4 {
     transition: opacity 0.2s;
 }
 
-#archive-now-btn:hover {
+#delete-archived-btn {
+    background-color: var(--delete-color);
+}
+
+#archive-now-btn:hover, #delete-archived-btn:hover {
     opacity: 0.9;
 }
 

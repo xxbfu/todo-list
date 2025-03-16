@@ -87,12 +87,28 @@ function loadTasksFromStorage() {
         Object.assign(todoList, parsedTasks);
     }
     
-    // Ensure interval setting is loaded
+    // Ensure interval settings are loaded
     const archiveDays = localStorage.getItem('archiveDays');
     if (archiveDays) {
         const daysElement = document.getElementById('archive-days');
         if (daysElement) {
             daysElement.value = archiveDays;
+        }
+    }
+    
+    const deleteDays = localStorage.getItem('deleteDays');
+    if (deleteDays) {
+        const deleteDaysElement = document.getElementById('delete-days');
+        if (deleteDaysElement) {
+            deleteDaysElement.value = deleteDays;
+        }
+    }
+    
+    const archiveEnabled = localStorage.getItem('archiveEnabled');
+    if (archiveEnabled !== null) {
+        const enabledElement = document.getElementById('archive-enabled');
+        if (enabledElement) {
+            enabledElement.checked = archiveEnabled === 'true';
         }
     }
 }
@@ -101,10 +117,20 @@ function loadTasksFromStorage() {
 function saveTasksToStorage() {
     localStorage.setItem('todoList', JSON.stringify(todoList));
     
-    // Save archiving interval
+    // Save archiving settings
     const daysElement = document.getElementById('archive-days');
     if (daysElement) {
         localStorage.setItem('archiveDays', daysElement.value);
+    }
+    
+    const deleteDaysElement = document.getElementById('delete-days');
+    if (deleteDaysElement) {
+        localStorage.setItem('deleteDays', deleteDaysElement.value);
+    }
+    
+    const archiveEnabledElement = document.getElementById('archive-enabled');
+    if (archiveEnabledElement) {
+        localStorage.setItem('archiveEnabled', archiveEnabledElement.checked);
     }
 }
 
@@ -658,12 +684,12 @@ function updateSettingsCategoryList() {
             // Add event listener to delete button
             const deleteBtn = li.querySelector('.category-delete-btn');
             deleteBtn.addEventListener('click', () => {
-                if (category === 'prioritni' || category === 'prace' || category === 'zabava') {
-                    alert('Nelze odstranit výchozí kategorie!');
+                if (category === 'hotove') {
+                    alert('Nelze odstranit kategorii "Hotové úkoly"!');
                     return;
                 }
                 
-                if (confirm(`Opravdu chcete odstranit kategorii "${displayName}"? Všechny úkoly budou smazány.`)) {
+                if (confirm(`Opravdu chcete odstranit kategorii "${displayName}"? Všechny úkoly budou přesunuty do archivu.`)) {
                     removeCategory(category);
                     updateSettingsCategoryList();
                 }
@@ -813,8 +839,8 @@ function removeCategory(category) {
 
 // Move category to archive
 function moveToArchive(category) {
-    // Skip if it's a default category that can't be deleted
-    if (category === 'prioritni' || category === 'prace' || category === 'zabava' || category === 'hotove') {
+    // Skip if it's the "hotove" category which can't be deleted
+    if (category === 'hotove') {
         return;
     }
     
@@ -847,6 +873,13 @@ function moveToArchive(category) {
 
 // Archive completed tasks based on date
 function archiveCompletedTasks() {
+    // Check if archiving is enabled
+    const archiveEnabled = document.getElementById('archive-enabled').checked;
+    if (!archiveEnabled) {
+        alert('Automatická archivace je vypnuta. Zapněte ji v nastavení.');
+        return;
+    }
+    
     const archiveDays = parseInt(document.getElementById('archive-days').value) || 30;
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
@@ -906,6 +939,56 @@ function archiveCompletedTasks() {
     }
 }
 
+// Delete old tasks from the archive
+function deleteOldFromArchive() {
+    const deleteDays = parseInt(document.getElementById('delete-days').value) || 90;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - deleteDays);
+    
+    let deletedCount = 0;
+    
+    // Go through all archived categories
+    Object.keys(todoList.archiv).forEach(category => {
+        const tasksToKeep = [];
+        
+        // Check each task's archive or completion date
+        todoList.archiv[category].tasks.forEach(task => {
+            const dateToCheck = task.completedAt ? new Date(task.completedAt) : 
+                               (task.archivedDate ? new Date(task.archivedDate) : new Date());
+                               
+            if (dateToCheck < cutoffDate) {
+                deletedCount++;
+            } else {
+                tasksToKeep.push(task);
+            }
+        });
+        
+        // Update the tasks
+        todoList.archiv[category].tasks = tasksToKeep;
+        
+        // If no tasks left, remove the category from archive
+        if (tasksToKeep.length === 0) {
+            delete todoList.archiv[category];
+        }
+    });
+    
+    // Update UI and save
+    if (deletedCount > 0) {
+        alert(`Trvale smazáno ${deletedCount} úkolů starších než ${deleteDays} dnů z archivu.`);
+        updateArchivedCategories();
+        
+        // If archive is visible, refresh it
+        const activeArchivedCategory = document.querySelector('.archived-category-btn.active');
+        if (activeArchivedCategory) {
+            displayArchivedTasks(activeArchivedCategory.dataset.category);
+        }
+        
+        saveTasksToStorage();
+    } else {
+        alert(`Žádné úkoly starší než ${deleteDays} dnů nebyly nalezeny v archivu.`);
+    }
+}
+
 // Update the archived categories UI
 function updateArchivedCategories() {
     const archivedCategoriesContainer = document.querySelector('.archived-categories');
@@ -921,6 +1004,27 @@ function updateArchivedCategories() {
         button.dataset.category = category;
         button.textContent = categoryData.displayName;
         
+        // Přidat tlačítko pro mazání
+        const buttonWrapper = document.createElement('div');
+        buttonWrapper.className = 'archived-category-wrapper';
+        
+        // Vytvořit tlačítko pro mazání
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'archived-category-delete-btn';
+        deleteBtn.innerHTML = '&times;';
+        deleteBtn.title = 'Smazat kategorii z archivu';
+        
+        // Přidat event listener
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Aby se neaktivovala kategorie
+            
+            if (confirm(`Opravdu chcete trvale smazat archivovanou kategorii "${categoryData.displayName}" a všechny její úkoly?`)) {
+                delete todoList.archiv[category];
+                updateArchivedCategories();
+                saveTasksToStorage();
+            }
+        });
+        
         button.addEventListener('click', () => {
             // Remove active class from all buttons
             document.querySelectorAll('.archived-category-btn').forEach(btn => {
@@ -934,7 +1038,10 @@ function updateArchivedCategories() {
             displayArchivedTasks(category);
         });
         
-        archivedCategoriesContainer.appendChild(button);
+        buttonWrapper.appendChild(button);
+        buttonWrapper.appendChild(deleteBtn);
+        
+        archivedCategoriesContainer.appendChild(buttonWrapper);
     });
     
     // Show/hide archive section based on whether there are archived categories
@@ -1077,23 +1184,35 @@ function handleDrop(e) {
         const fromCategory = draggedItem.dataset.category;
         const toCategory = this.dataset.category;
         
-        // Update the category order
-        const fromIndex = todoList.categoryOrder.indexOf(fromCategory);
-        const toIndex = todoList.categoryOrder.indexOf(toCategory);
+        // Get all category items in current order
+        const categoryItems = Array.from(document.querySelectorAll('.settings-category-item'));
+        const fromIdx = categoryItems.indexOf(draggedItem);
+        const toIdx = categoryItems.indexOf(this);
         
-        if (fromIndex !== -1 && toIndex !== -1) {
-            // Remove from original position
-            todoList.categoryOrder.splice(fromIndex, 1);
-            
-            // Insert at new position
-            todoList.categoryOrder.splice(toIndex, 0, fromCategory);
-            
-            // Update the category list in the main UI
-            updateCategoryList();
-            
-            // Save the updated order
-            saveTasksToStorage();
+        // Reorder UI elements first
+        const parent = draggedItem.parentNode;
+        
+        if (fromIdx < toIdx) {
+            // Moving down
+            parent.insertBefore(draggedItem, this.nextSibling);
+        } else {
+            // Moving up
+            parent.insertBefore(draggedItem, this);
         }
+        
+        // Now update the order in data structure
+        // Get updated order after DOM changes
+        const newOrder = Array.from(document.querySelectorAll('.settings-category-item'))
+            .map(item => item.dataset.category);
+            
+        // Filter out undefined/null and remove 'hotove' if present
+        todoList.categoryOrder = newOrder.filter(cat => cat && cat !== 'hotove');
+        
+        // Update the category list in the main UI
+        updateCategoryList();
+        
+        // Save the updated order
+        saveTasksToStorage();
     }
     
     this.classList.remove('drag-over');
@@ -1201,6 +1320,20 @@ function setupAdditionalEventListeners() {
     const archiveNowBtn = document.getElementById('archive-now-btn');
     if (archiveNowBtn) {
         archiveNowBtn.addEventListener('click', archiveCompletedTasks);
+    }
+    
+    // Delete from archive button
+    const deleteArchivedBtn = document.getElementById('delete-archived-btn');
+    if (deleteArchivedBtn) {
+        deleteArchivedBtn.addEventListener('click', deleteOldFromArchive);
+    }
+    
+    // Archive enabled checkbox
+    const archiveEnabledCheckbox = document.getElementById('archive-enabled');
+    if (archiveEnabledCheckbox) {
+        archiveEnabledCheckbox.addEventListener('change', () => {
+            saveTasksToStorage();
+        });
     }
     
     // Initial color selectors
