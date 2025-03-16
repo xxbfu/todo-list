@@ -63,6 +63,7 @@ const completedCategoryBtns = document.querySelectorAll('.completed-category-btn
 // Elementy pro nastavení a vzhled
 const themeToggleBtn = document.getElementById('theme-toggle');         // Přepínač tmavého režimu
 const settingsToggleBtn = document.getElementById('settings-toggle');   // Tlačítko nastavení
+const snakeGameToggleBtn = document.getElementById('snake-game-toggle'); // Tlačítko hry Had
 const colorBtns = document.querySelectorAll('.color-btn');              // Tlačítka výběru barvy
 const settingsCategoryList = document.getElementById('settings-category-list'); // Seznam kategorií v nastavení
 const colorPalette = document.querySelector('.color-palette');          // Barevná paleta v nastavení
@@ -70,6 +71,7 @@ const colorPalette = document.querySelector('.color-palette');          // Barev
 // Modální okna
 const taskDetailModal = document.getElementById('task-detail-modal');   // Modální okno detailu úkolu
 const settingsModal = document.getElementById('settings-modal');        // Modální okno nastavení
+const snakeGameModal = document.getElementById('snake-game-modal');     // Modální okno hry Had
 const closeModalBtns = document.querySelectorAll('.close-modal');       // Tlačítka pro zavření modálních oken
 
 /**
@@ -933,6 +935,41 @@ function updateSettingsCategoryList() {
 function closeModal() {
     taskDetailModal.classList.remove('show');
     settingsModal.classList.remove('show');
+    snakeGameModal.classList.remove('show');
+    
+    // Pokud byla otevřena hra, zastavíme ji
+    if (typeof stopSnakeGame === 'function' && typeof snakeGameActive !== 'undefined' && snakeGameActive) {
+        stopSnakeGame();
+    }
+}
+
+/**
+ * Zobrazení modálního okna s hrou Had
+ * Dočasná definice pro případ, že externí soubor ještě nebyl načten
+ */
+function showSnakeGameModal() {
+    if (typeof initSnakeGame !== 'function') {
+        console.log('Snake game not initialized yet, trying to load it now');
+        loadScript('js/games/snake.js', function() {
+            console.log('Snake game loaded on demand');
+            if (typeof initSnakeGame === 'function') {
+                initSnakeGame();
+                snakeGameModal.classList.add('show');
+                // Pokud je k dispozici funkce pro vykreslení plátna, zavoláme ji
+                if (typeof drawSnakeGameScreen === 'function') {
+                    drawSnakeGameScreen();
+                }
+            } else {
+                alert('Chyba při načítání hry Had. Zkuste obnovit stránku.');
+            }
+        });
+    } else {
+        snakeGameModal.classList.add('show');
+        // Pokud je k dispozici funkce pro vykreslení plátna, zavoláme ji
+        if (typeof drawSnakeGameScreen === 'function') {
+            drawSnakeGameScreen();
+        }
+    }
 }
 
 // Toggle dark/light theme
@@ -1505,7 +1542,7 @@ function setupAdditionalEventListeners() {
     });
     
     window.addEventListener('click', (e) => {
-        if (e.target === taskDetailModal || e.target === settingsModal) {
+        if (e.target === taskDetailModal || e.target === settingsModal || e.target === snakeGameModal) {
             closeModal();
         }
     });
@@ -1515,6 +1552,9 @@ function setupAdditionalEventListeners() {
     
     // Settings toggle
     settingsToggleBtn.addEventListener('click', showSettingsModal);
+    
+    // Snake game toggle
+    snakeGameToggleBtn.addEventListener('click', showSnakeGameModal);
     
     // Category management
     addCategoryBtn.addEventListener('click', addCategory);
@@ -1596,6 +1636,31 @@ function applyTheme() {
     }
 }
 
+/**
+ * Načtení JavaScriptového souboru dynamicky
+ * 
+ * @param {string} url - Cesta k souboru .js
+ * @param {function} callback - Funkce, která se spustí po načtení skriptu
+ */
+function loadScript(url, callback) {
+    const script = document.createElement('script');
+    script.type = 'text/javascript';
+    script.src = url;
+    
+    script.onload = function() {
+        console.log('Script ' + url + ' loaded successfully');
+        if (callback) callback();
+    };
+    
+    script.onerror = function() {
+        console.error('Failed to load script: ' + url);
+        alert('Nepodařilo se načíst hru: ' + url);
+    };
+    
+    document.head.appendChild(script);
+    console.log('Attempting to load script: ' + url);
+}
+
 // Initialize the app when the DOM is loaded
 /**
  * Inicializace aplikace při načtení stránky
@@ -1628,4 +1693,19 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Uložení všech dat pro zajištění správné struktury
     saveTasksToStorage();
+    
+    // Inicializace hry Had - odložené načtení externího skriptu
+    setTimeout(function() {
+        loadScript('js/games/snake.js', function() {
+            console.log('Snake game script loaded via delayed initialization');
+            if (typeof initSnakeGame === 'function') {
+                try {
+                    initSnakeGame();
+                    console.log('Snake game initialized successfully');
+                } catch (e) {
+                    console.error('Error initializing snake game:', e);
+                }
+            }
+        });
+    }, 500);
 });

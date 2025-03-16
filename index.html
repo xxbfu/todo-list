@@ -13,6 +13,7 @@
             <h1>Můj TODO List</h1>
             <div class="header-buttons">
                 <button id="theme-toggle" class="theme-toggle">🌙</button>
+                <button id="snake-game-toggle" class="snake-game-toggle">🐍</button>
                 <button id="settings-toggle" class="settings-toggle">⚙️</button>
             </div>
         </div>
@@ -89,6 +90,41 @@
             </div>
             <div id="modal-task-detail">
                 <p id="modal-detail-text"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modální okno pro hru Had -->
+    <div id="snake-game-modal" class="modal">
+        <div class="modal-content snake-modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Hra Had</h2>
+            
+            <div class="game-mode-selection">
+                <button id="single-player-btn" class="game-mode-btn active">Prokrastinace</button>
+                <button id="two-player-btn" class="game-mode-btn">Kdo z koho</button>
+            </div>
+            <div class="game-mode-descriptions">
+                <p id="single-player-desc" class="game-mode-desc">Co nemusíš dělat dnes, odlož na zítra</p>
+                <p id="two-player-desc" class="game-mode-desc hidden">Soutěž o task: Vyhraj nebo udělej úkol</p>
+            </div>
+            
+            <div class="snake-game-container">
+                <canvas id="snake-game-canvas"></canvas>
+                <div class="game-info">
+                    <div id="player1-score">Modrý: 0</div>
+                    <div id="player2-score" class="hidden">Červený: 0</div>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <p><strong>Ovládání:</strong></p>
+                <p>Modrý had: Šipky (←↑→↓)</p>
+                <p>Červený had: Klávesy W, A, S, D</p>
+                <div class="game-buttons">
+                    <button id="start-game-btn">Začít hru</button>
+                    <button id="restart-game-btn" class="hidden">Hrát znovu</button>
+                </div>
             </div>
         </div>
     </div>
