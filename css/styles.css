@@ -121,6 +121,29 @@ h4 {
     margin-bottom: 8px;
     background-color: var(--hover-bg);
     border-radius: 4px;
+    cursor: grab;
+    transition: background-color 0.2s;
+}
+
+.settings-category-item:hover {
+    background-color: var(--task-hover);
+}
+
+.settings-category-item.dragging {
+    opacity: 0.5;
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.settings-category-item.drag-over {
+    border: 2px dashed var(--accent-color);
+}
+
+.drag-handle {
+    cursor: grab;
+    padding: 0 8px;
+    color: var(--text-secondary);
+    font-size: 18px;
 }
 
 .category-delete-btn {
@@ -137,11 +160,55 @@ h4 {
     justify-content: center;
 }
 
+.color-positions {
+    margin-bottom: 20px;
+}
+
+.color-position-selectors {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.color-position {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--container-bg);
+    color: var(--text-color);
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.color-position.active {
+    border: 3px solid var(--accent-color);
+}
+
+.position-preview {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.selected-position-color {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background-color: var(--btn-bg);
+}
+
 .color-palette {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    margin-top: 15px;
+    margin-top: 10px;
 }
 
 .palette-color {
@@ -154,6 +221,13 @@ h4 {
 
 .palette-color.selected {
     border: 2px solid var(--accent-color);
+}
+
+.color-hint {
+    margin-top: 15px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 .category-nav {
@@ -322,12 +396,31 @@ h4 {
     background-color: var(--task-hover);
 }
 
-.task-checkbox {
+.checkbox-container {
+    position: relative;
     margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-checkbox {
     cursor: pointer;
     min-width: 20px;
     height: 20px;
     accent-color: var(--accent-color);
+    position: relative;
+    z-index: 2;
+}
+
+.task-checkbox-color {
+    position: absolute;
+    left: -3px;
+    top: -3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 5px;
+    z-index: 1;
 }
 
 .task-content {
@@ -406,6 +499,108 @@ h4 {
 .completed-category-btn.active {
     background-color: var(--completed-color);
     color: white;
+}
+
+/* Archive styles */
+.archive-section {
+    margin-top: 30px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+
+.archive-toggle {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--text-color);
+    margin-bottom: 15px;
+}
+
+.toggle-icon {
+    font-size: 18px;
+    transition: transform 0.3s;
+}
+
+.archive-toggle.open .toggle-icon {
+    transform: rotate(45deg);
+}
+
+.archived-categories {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.archived-category-btn {
+    padding: 8px 12px;
+    background-color: var(--btn-bg);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.archived-category-btn.active {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+/* Archive settings styles */
+.archive-settings {
+    padding: 15px;
+    background-color: var(--hover-bg);
+    border-radius: 4px;
+}
+
+.archive-interval {
+    margin-bottom: 15px;
+}
+
+.archive-interval label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.archive-input-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#archive-days {
+    width: 80px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background-color: var(--container-bg);
+    color: var(--text-color);
+    font-size: 16px;
+}
+
+.archive-unit {
+    color: var(--text-secondary);
+}
+
+.archive-actions {
+    margin-top: 15px;
+}
+
+#archive-now-btn {
+    padding: 8px 15px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+
+#archive-now-btn:hover {
+    opacity: 0.9;
 }
 
 /* Modal styles */

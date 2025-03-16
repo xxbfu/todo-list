@@ -7,7 +7,9 @@ const todoList = {
         prioritni: [],
         prace: [],
         zabava: []
-    }
+    },
+    archiv: {}, // Archiv smazaných kategorií
+    categoryOrder: ['prioritni', 'prace', 'zabava'] // Pořadí kategorií
 };
 
 // DOM Elements
@@ -40,17 +42,20 @@ let selectedColor = '';
 
 // Definice 20 barev pro paletu
 const colorPalettes = [
-    '#FFCCCB', '#FFB6C1', '#FFC0CB', '#FF69B4', // růžové
-    '#ADD8E6', '#87CEEB', '#87CEFA', '#00BFFF', // modré
-    '#98FB98', '#90EE90', '#8FBC8F', '#3CB371', // zelené
-    '#FFFACD', '#FAFAD2', '#FFFFE0', '#F0E68C', // žluté
-    '#E6E6FA', '#D8BFD8', '#DDA0DD', '#DA70D6'  // fialové
+    '#FF6B6B', '#FF8787', '#FFA8A8', '#FFB8B8', // červené
+    '#74C0FC', '#A5D8FF', '#C5F6FA', '#66D9E8', // modré
+    '#8CE99A', '#69DB7C', '#51CF66', '#40C057', // zelené
+    '#FFD43B', '#FCC419', '#FAB005', '#F59F00', // žluté
+    '#CED4DA', '#ADB5BD', '#D0BFFF', '#B197FC'  // šedé a fialové
 ];
 
-// Aktivní barvy pro úkoly (5 barev)
+// Aktivní barvy pro úkoly (5 barev, poslední vždy prázdná)
 const taskColors = [
-    '#ffcccb', '#c1e1c1', '#c4c3d0', '#add8e6', ''
+    '#ff6b6b', '#74c0fc', '#8ce99a', '#ffd43b', ''
 ];
+
+// Aktuálně editovaná pozice barvy (1-5)
+let editingColorPosition = 0;
 
 // Initialize app
 function init() {
@@ -69,13 +74,38 @@ function loadTasksFromStorage() {
     const savedTasks = localStorage.getItem('todoList');
     if (savedTasks) {
         const parsedTasks = JSON.parse(savedTasks);
+        
+        // Ensure critical properties exist
+        if (!parsedTasks.archiv) {
+            parsedTasks.archiv = {};
+        }
+        
+        if (!parsedTasks.categoryOrder || !Array.isArray(parsedTasks.categoryOrder)) {
+            parsedTasks.categoryOrder = ['prioritni', 'prace', 'zabava'];
+        }
+        
         Object.assign(todoList, parsedTasks);
+    }
+    
+    // Ensure interval setting is loaded
+    const archiveDays = localStorage.getItem('archiveDays');
+    if (archiveDays) {
+        const daysElement = document.getElementById('archive-days');
+        if (daysElement) {
+            daysElement.value = archiveDays;
+        }
     }
 }
 
 // Save tasks to localStorage
 function saveTasksToStorage() {
     localStorage.setItem('todoList', JSON.stringify(todoList));
+    
+    // Save archiving interval
+    const daysElement = document.getElementById('archive-days');
+    if (daysElement) {
+        localStorage.setItem('archiveDays', daysElement.value);
+    }
 }
 
 // Set up event listeners
@@ -157,9 +187,12 @@ function displayTasks(category) {
             const li = document.createElement('li');
             li.className = 'task-item';
             
-            // Add task color if it exists
+            // Proměnná pro div s barvou kolem checkboxu
+            let colorDivHTML = '';
+            
+            // Přidat barvu pouze kolem checkboxu
             if (task.color) {
-                li.style.backgroundColor = task.color;
+                colorDivHTML = `<div class="task-checkbox-color" style="background-color: ${task.color}"></div>`;
             }
             
             // Format due date if it exists
@@ -185,7 +218,10 @@ function displayTasks(category) {
             }
             
             li.innerHTML = `
-                <input type="checkbox" class="task-checkbox">
+                <div class="checkbox-container">
+                    ${colorDivHTML}
+                    <input type="checkbox" class="task-checkbox">
+                </div>
                 <div class="task-content">
                     <div class="task-text">${task.text}</div>
                     ${dueDateHTML}
@@ -238,9 +274,12 @@ function displayCompletedTasks(category) {
             const li = document.createElement('li');
             li.className = 'task-item';
             
-            // Add task color if it exists
+            // Proměnná pro div s barvou kolem checkboxu
+            let colorDivHTML = '';
+            
+            // Přidat barvu pouze kolem checkboxu
             if (task.color) {
-                li.style.backgroundColor = task.color;
+                colorDivHTML = `<div class="task-checkbox-color" style="background-color: ${task.color}"></div>`;
             }
             
             // Format due date if it exists
@@ -272,7 +311,10 @@ function displayCompletedTasks(category) {
             }
             
             li.innerHTML = `
-                <input type="checkbox" class="task-checkbox" checked>
+                <div class="checkbox-container">
+                    ${colorDivHTML}
+                    <input type="checkbox" class="task-checkbox" checked>
+                </div>
                 <div class="task-content">
                     <div class="task-text completed">${task.text}</div>
                     ${dueDateHTML}
@@ -466,6 +508,23 @@ function showSettingsModal() {
 
 // Update color palette in settings
 function updateColorPalette() {
+    // Aktualizace náhledu barvy a čísla pozice
+    document.getElementById('position-number').textContent = editingColorPosition + 1;
+    const selectedPositionColor = document.querySelector('.selected-position-color');
+    selectedPositionColor.style.backgroundColor = taskColors[editingColorPosition] || 'transparent';
+    
+    // Aktivuj aktuální tlačítko pozice
+    document.querySelectorAll('.color-position').forEach((btn, index) => {
+        if (index === editingColorPosition) {
+            btn.classList.add('active');
+            btn.style.backgroundColor = taskColors[editingColorPosition] || 'transparent';
+        } else {
+            btn.classList.remove('active');
+            btn.style.backgroundColor = taskColors[index] || 'transparent';
+        }
+    });
+    
+    // Aktualizace palety barev
     colorPalette.innerHTML = '';
     
     colorPalettes.forEach(color => {
@@ -473,34 +532,49 @@ function updateColorPalette() {
         colorBtn.className = 'palette-color';
         colorBtn.style.backgroundColor = color;
         
-        // Check if this color is one of active task colors
-        if (taskColors.includes(color.toLowerCase())) {
+        // Zvýrazni, pokud je to aktuální barva pro vybranou pozici
+        if (taskColors[editingColorPosition] && taskColors[editingColorPosition].toLowerCase() === color.toLowerCase()) {
             colorBtn.classList.add('selected');
         }
         
         colorBtn.addEventListener('click', () => {
-            toggleTaskColor(color);
+            setColorForPosition(color);
         });
         
         colorPalette.appendChild(colorBtn);
     });
+    
+    // Přidej tlačítko pro "žádná barva"
+    const noColorBtn = document.createElement('button');
+    noColorBtn.className = 'palette-color';
+    noColorBtn.style.backgroundColor = 'transparent';
+    noColorBtn.style.border = '1px dashed ' + getComputedStyle(document.documentElement).getPropertyValue('--border-color');
+    
+    if (!taskColors[editingColorPosition]) {
+        noColorBtn.classList.add('selected');
+    }
+    
+    noColorBtn.addEventListener('click', () => {
+        setColorForPosition('');
+    });
+    
+    colorPalette.appendChild(noColorBtn);
 }
 
-// Toggle a color in task colors
-function toggleTaskColor(color) {
+// Nastavení barvy pro konkrétní pozici
+function setColorForPosition(color) {
+    // Poslední pozice je vždy prázdná
+    if (editingColorPosition === 4) {
+        return;
+    }
+    
     const lowerColor = color.toLowerCase();
     
-    // Check if already in task colors
-    const index = taskColors.indexOf(lowerColor);
+    // Nastav barvu na danou pozici
+    taskColors[editingColorPosition] = lowerColor;
     
-    // If color is active and we have more than 1 color, remove it
-    if (index !== -1 && taskColors.length > 1) {
-        taskColors.splice(index, 1);
-    } 
-    // If color is not active and we have less than 5 colors, add it
-    else if (index === -1 && taskColors.length < 5) {
-        taskColors.push(lowerColor);
-    }
+    // Vždy zajisti, že poslední barva je prázdná
+    taskColors[4] = '';
     
     // Update color selectors in main view
     updateColorSelectors();
@@ -541,6 +615,26 @@ function updateColorSelectors() {
     });
 }
 
+// Funkce pro získání zobrazovaného názvu kategorie
+function getCategoryDisplayName(categorySlug) {
+    // Mapování výchozích kategorií
+    const categoryMapping = {
+        'prioritni': 'Prioritní',
+        'prace': 'Práce',
+        'zabava': 'Zábava',
+        'hotove': 'Hotové úkoly'
+    };
+    
+    // Pokud je to výchozí kategorie, použijeme mapování
+    if (categoryMapping[categorySlug]) {
+        return categoryMapping[categorySlug];
+    }
+    
+    // Pokud je to uživatelská kategorie, prvním písmeno velké
+    return categorySlug.charAt(0).toUpperCase() + categorySlug.slice(1)
+        .replace(/_/g, ' '); // Nahradit podtržítka mezerami
+}
+
 // Update categories list in settings modal
 function updateSettingsCategoryList() {
     settingsCategoryList.innerHTML = '';
@@ -549,11 +643,14 @@ function updateSettingsCategoryList() {
         if (category !== 'hotove') {
             const li = document.createElement('li');
             li.className = 'settings-category-item';
+            li.draggable = true;
+            li.dataset.category = category;
             
-            // Get display name (first character uppercase)
-            const displayName = category.charAt(0).toUpperCase() + category.slice(1);
+            // Získej zobrazované jméno kategorie
+            const displayName = getCategoryDisplayName(category);
             
             li.innerHTML = `
+                <div class="drag-handle">&#8942;</div>
                 <span>${displayName}</span>
                 <button class="category-delete-btn" data-category="${category}">&times;</button>
             `;
@@ -571,6 +668,14 @@ function updateSettingsCategoryList() {
                     updateSettingsCategoryList();
                 }
             });
+            
+            // Přidání event listenerů pro drag and drop
+            li.addEventListener('dragstart', handleDragStart);
+            li.addEventListener('dragover', handleDragOver);
+            li.addEventListener('dragenter', handleDragEnter);
+            li.addEventListener('dragleave', handleDragLeave);
+            li.addEventListener('drop', handleDrop);
+            li.addEventListener('dragend', handleDragEnd);
             
             settingsCategoryList.appendChild(li);
         }
@@ -615,16 +720,8 @@ function addCategory() {
         todoList[categorySlug] = [];
         todoList.hotove[categorySlug] = [];
         
-        // Add to UI
-        const li = document.createElement('li');
-        li.innerHTML = `<a href="#" class="category-link" data-category="${categorySlug}">${categoryName}</a>`;
-        
-        // Insert before the "Hotové úkoly" category
-        const completedCategoryLi = Array.from(categoryList.querySelectorAll('li')).find(
-            li => li.querySelector('.category-link').dataset.category === 'hotove'
-        );
-        
-        categoryList.insertBefore(li, completedCategoryLi);
+        // Add to category order (before "hotove")
+        todoList.categoryOrder.push(categorySlug);
         
         // Add to completed categories
         const completedBtn = document.createElement('button');
@@ -633,24 +730,6 @@ function addCategory() {
         completedBtn.textContent = categoryName;
         
         document.querySelector('.completed-categories').appendChild(completedBtn);
-        
-        // Add event listener
-        li.querySelector('.category-link').addEventListener('click', function(e) {
-            e.preventDefault();
-            const category = this.getAttribute('data-category');
-            
-            // Remove active class from all links
-            document.querySelectorAll('.category-link').forEach(link => link.classList.remove('active'));
-            
-            // Add active class to clicked link
-            this.classList.add('active');
-            
-            // Update active category and display tasks
-            activeCategory = category;
-            activeCategoryTasks.classList.remove('hidden');
-            completedSubcategories.classList.add('hidden');
-            displayTasks(category);
-        });
         
         // Add event listener to completed category button
         completedBtn.addEventListener('click', function() {
@@ -667,9 +746,17 @@ function addCategory() {
             displayCompletedTasks(category);
         });
         
+        // Update the UI with the new category
+        updateCategoryList();
+        
         // Save changes
         saveTasksToStorage();
         newCategoryInput.value = '';
+        
+        // Aktualizace seznamu kategorií v nastavení
+        if (settingsModal.classList.contains('show')) {
+            updateSettingsCategoryList();
+        }
     }
 }
 
@@ -683,9 +770,8 @@ function removeCategory(category) {
     // Check if this is the currently active category
     const isActive = activeCategory === category;
     
-    // Remove from data structure
-    delete todoList[category];
-    delete todoList.hotove[category];
+    // Move to archive before deleting
+    moveToArchive(category);
     
     // Remove from UI
     const categoryLi = Array.from(categoryList.querySelectorAll('li')).find(
@@ -705,6 +791,12 @@ function removeCategory(category) {
         completedBtn.parentNode.removeChild(completedBtn);
     }
     
+    // Remove from category order
+    const categoryIndex = todoList.categoryOrder.indexOf(category);
+    if (categoryIndex !== -1) {
+        todoList.categoryOrder.splice(categoryIndex, 1);
+    }
+    
     // If this was the active category, switch to first category
     if (isActive) {
         const firstCategory = document.querySelector('.category-link').dataset.category;
@@ -717,6 +809,352 @@ function removeCategory(category) {
     
     // Save changes
     saveTasksToStorage();
+}
+
+// Move category to archive
+function moveToArchive(category) {
+    // Skip if it's a default category that can't be deleted
+    if (category === 'prioritni' || category === 'prace' || category === 'zabava' || category === 'hotove') {
+        return;
+    }
+    
+    // Create archive entry if it doesn't exist
+    if (!todoList.archiv[category]) {
+        todoList.archiv[category] = {
+            tasks: [],
+            displayName: getCategoryDisplayName(category),
+            archivedDate: new Date().toISOString()
+        };
+    }
+    
+    // Move active tasks to archive
+    if (todoList[category] && todoList[category].length > 0) {
+        todoList.archiv[category].tasks = todoList.archiv[category].tasks.concat(todoList[category]);
+    }
+    
+    // Move completed tasks to archive
+    if (todoList.hotove[category] && todoList.hotove[category].length > 0) {
+        todoList.archiv[category].tasks = todoList.archiv[category].tasks.concat(todoList.hotove[category]);
+    }
+    
+    // Remove from data structure
+    delete todoList[category];
+    delete todoList.hotove[category];
+    
+    // Update archive UI if visible
+    updateArchivedCategories();
+}
+
+// Archive completed tasks based on date
+function archiveCompletedTasks() {
+    const archiveDays = parseInt(document.getElementById('archive-days').value) || 30;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - archiveDays);
+    
+    let archivedCount = 0;
+    
+    // Go through all categories with completed tasks
+    Object.keys(todoList.hotove).forEach(category => {
+        // Skip "hotove" itself
+        if (category === 'hotove') return;
+        
+        const tasksToKeep = [];
+        const tasksToArchive = [];
+        
+        // Check each task's completion date
+        todoList.hotove[category].forEach(task => {
+            if (task.completedAt) {
+                const completedDate = new Date(task.completedAt);
+                if (completedDate < cutoffDate) {
+                    tasksToArchive.push(task);
+                    archivedCount++;
+                } else {
+                    tasksToKeep.push(task);
+                }
+            } else {
+                tasksToKeep.push(task);
+            }
+        });
+        
+        // If we have tasks to archive
+        if (tasksToArchive.length > 0) {
+            // Create special "archived_completed" category if it doesn't exist
+            if (!todoList.archiv[category]) {
+                todoList.archiv[category] = {
+                    tasks: [],
+                    displayName: getCategoryDisplayName(category),
+                    archivedDate: new Date().toISOString()
+                };
+            }
+            
+            // Add tasks to archive
+            todoList.archiv[category].tasks = todoList.archiv[category].tasks.concat(tasksToArchive);
+            
+            // Update the completed tasks
+            todoList.hotove[category] = tasksToKeep;
+        }
+    });
+    
+    // Update UI and save
+    if (archivedCount > 0) {
+        alert(`Archivováno ${archivedCount} úkolů starších než ${archiveDays} dnů.`);
+        displayCompletedTasks(activeCompletedCategory);
+        updateArchivedCategories();
+        saveTasksToStorage();
+    } else {
+        alert(`Žádné úkoly starší než ${archiveDays} dnů nebyly nalezeny.`);
+    }
+}
+
+// Update the archived categories UI
+function updateArchivedCategories() {
+    const archivedCategoriesContainer = document.querySelector('.archived-categories');
+    if (!archivedCategoriesContainer) return;
+    
+    archivedCategoriesContainer.innerHTML = '';
+    
+    // Add buttons for each archived category
+    Object.keys(todoList.archiv).forEach(category => {
+        const categoryData = todoList.archiv[category];
+        const button = document.createElement('button');
+        button.className = 'archived-category-btn';
+        button.dataset.category = category;
+        button.textContent = categoryData.displayName;
+        
+        button.addEventListener('click', () => {
+            // Remove active class from all buttons
+            document.querySelectorAll('.archived-category-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Add active class to clicked button
+            button.classList.add('active');
+            
+            // Display archived tasks
+            displayArchivedTasks(category);
+        });
+        
+        archivedCategoriesContainer.appendChild(button);
+    });
+    
+    // Show/hide archive section based on whether there are archived categories
+    const archiveSection = document.querySelector('.archive-section');
+    if (archiveSection) {
+        archiveSection.style.display = Object.keys(todoList.archiv).length > 0 ? 'block' : 'none';
+    }
+}
+
+// Display tasks from the archive
+function displayArchivedTasks(category) {
+    const archivedTaskList = document.getElementById('archived-task-list');
+    if (!archivedTaskList) return;
+    
+    archivedTaskList.innerHTML = '';
+    
+    if (todoList.archiv[category] && todoList.archiv[category].tasks.length > 0) {
+        const tasks = todoList.archiv[category].tasks;
+        
+        tasks.forEach((task, index) => {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            
+            // Proměnná pro div s barvou kolem checkboxu
+            let colorDivHTML = '';
+            
+            // Přidat barvu pouze kolem checkboxu
+            if (task.color) {
+                colorDivHTML = `<div class="task-checkbox-color" style="background-color: ${task.color}"></div>`;
+            }
+            
+            // Format due date if it exists
+            let dueDateHTML = '';
+            if (task.dueDate) {
+                const dueDate = new Date(task.dueDate);
+                const formattedDate = new Intl.DateTimeFormat('cs-CZ', { 
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                }).format(dueDate);
+                
+                dueDateHTML = `<div class="task-due-date">Termín: ${formattedDate}</div>`;
+            }
+            
+            // Format completion date if it exists
+            let completionHTML = '';
+            if (task.completedAt) {
+                const completedDate = new Date(task.completedAt);
+                const formattedCompletionDate = new Intl.DateTimeFormat('cs-CZ', { 
+                    day: 'numeric', 
+                    month: 'long',
+                    year: 'numeric'
+                }).format(completedDate);
+                
+                completionHTML = `<div class="task-due-date">Dokončeno: ${formattedCompletionDate}</div>`;
+            }
+            
+            // Format task detail as inline snippet if it exists
+            let detailHTML = '';
+            if (task.detail) {
+                const shortDetail = task.detail.length > 80 ? task.detail.substring(0, 80) + '...' : task.detail;
+                detailHTML = `<div class="task-inline-detail">${shortDetail}</div>`;
+            }
+            
+            const taskTextClass = task.completedAt ? 'task-text completed' : 'task-text';
+            
+            li.innerHTML = `
+                <div class="checkbox-container">
+                    ${colorDivHTML}
+                    <input type="checkbox" class="task-checkbox" ${task.completedAt ? 'checked' : ''} disabled>
+                </div>
+                <div class="task-content">
+                    <div class="${taskTextClass}">${task.text}</div>
+                    ${dueDateHTML}
+                    ${completionHTML}
+                    ${detailHTML}
+                </div>
+                <button class="delete-btn">✕</button>
+            `;
+            
+            // Add event listener to permanently delete the task
+            li.querySelector('.delete-btn').addEventListener('click', () => {
+                if (confirm('Opravdu chcete trvale odstranit tento úkol z archivu?')) {
+                    todoList.archiv[category].tasks.splice(index, 1);
+                    
+                    // If this was the last task, remove the category from archive
+                    if (todoList.archiv[category].tasks.length === 0) {
+                        delete todoList.archiv[category];
+                        updateArchivedCategories();
+                    } else {
+                        displayArchivedTasks(category);
+                    }
+                    
+                    saveTasksToStorage();
+                }
+            });
+            
+            // Add event listener to show task details
+            li.querySelector('.task-content').addEventListener('click', () => {
+                showTaskDetails(task);
+            });
+            
+            archivedTaskList.appendChild(li);
+        });
+    }
+}
+
+// Variables for drag and drop operation
+let draggedItem = null;
+
+// Drag and Drop handlers
+function handleDragStart(e) {
+    this.classList.add('dragging');
+    draggedItem = this;
+    
+    // Set data for drag operation
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/html', this.innerHTML);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    return false;
+}
+
+function handleDragEnter(e) {
+    this.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    this.classList.remove('drag-over');
+}
+
+function handleDrop(e) {
+    e.stopPropagation();
+    
+    // Don't do anything if dropping on the same item
+    if (draggedItem !== this) {
+        // Get the category names
+        const fromCategory = draggedItem.dataset.category;
+        const toCategory = this.dataset.category;
+        
+        // Update the category order
+        const fromIndex = todoList.categoryOrder.indexOf(fromCategory);
+        const toIndex = todoList.categoryOrder.indexOf(toCategory);
+        
+        if (fromIndex !== -1 && toIndex !== -1) {
+            // Remove from original position
+            todoList.categoryOrder.splice(fromIndex, 1);
+            
+            // Insert at new position
+            todoList.categoryOrder.splice(toIndex, 0, fromCategory);
+            
+            // Update the category list in the main UI
+            updateCategoryList();
+            
+            // Save the updated order
+            saveTasksToStorage();
+        }
+    }
+    
+    this.classList.remove('drag-over');
+    return false;
+}
+
+function handleDragEnd(e) {
+    this.classList.remove('dragging');
+    
+    // Clear all drag-over classes
+    document.querySelectorAll('.settings-category-item').forEach(item => {
+        item.classList.remove('drag-over');
+    });
+}
+
+// Update the category list in main UI to reflect the new order
+function updateCategoryList() {
+    // Clear existing list items except the "Hotové úkoly"
+    const completedCategoryLi = Array.from(categoryList.querySelectorAll('li')).find(
+        li => li.querySelector('.category-link').dataset.category === 'hotove'
+    );
+    
+    categoryList.innerHTML = '';
+    
+    // Add categories in the correct order
+    todoList.categoryOrder.forEach(category => {
+        const displayName = getCategoryDisplayName(category);
+        
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="#" class="category-link" data-category="${category}">${displayName}</a>`;
+        
+        // Set active class if this is the current category
+        if (category === activeCategory) {
+            li.querySelector('.category-link').classList.add('active');
+        }
+        
+        // Add event listener
+        li.querySelector('.category-link').addEventListener('click', function(e) {
+            e.preventDefault();
+            const category = this.getAttribute('data-category');
+            
+            // Remove active class from all links
+            document.querySelectorAll('.category-link').forEach(link => link.classList.remove('active'));
+            
+            // Add active class to clicked link
+            this.classList.add('active');
+            
+            // Update active category and display tasks
+            activeCategory = category;
+            activeCategoryTasks.classList.remove('hidden');
+            completedSubcategories.classList.add('hidden');
+            displayTasks(category);
+        });
+        
+        categoryList.appendChild(li);
+    });
+    
+    // Add back the "Hotové úkoly" category at the end
+    if (completedCategoryLi) {
+        categoryList.appendChild(completedCategoryLi);
+    }
 }
 
 // Setup additional event listeners
@@ -740,6 +1178,30 @@ function setupAdditionalEventListeners() {
     
     // Category management
     addCategoryBtn.addEventListener('click', addCategory);
+    
+    // Color position buttons
+    document.querySelectorAll('.color-position').forEach(btn => {
+        btn.addEventListener('click', () => {
+            editingColorPosition = parseInt(btn.dataset.position);
+            updateColorPalette();
+        });
+    });
+    
+    // Archive toggle
+    const archiveToggle = document.querySelector('.archive-toggle');
+    if (archiveToggle) {
+        archiveToggle.addEventListener('click', () => {
+            const archiveContent = document.querySelector('.archive-content');
+            archiveToggle.classList.toggle('open');
+            archiveContent.classList.toggle('hidden');
+        });
+    }
+    
+    // Archive now button
+    const archiveNowBtn = document.getElementById('archive-now-btn');
+    if (archiveNowBtn) {
+        archiveNowBtn.addEventListener('click', archiveCompletedTasks);
+    }
     
     // Initial color selectors
     updateColorSelectors();
@@ -783,4 +1245,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Setup event listeners
     setupAdditionalEventListeners();
     applyTheme();
+    
+    // Update the category list based on order
+    updateCategoryList();
+    
+    // Initialize the archive
+    updateArchivedCategories();
+    
+    // Save to ensure proper structure
+    saveTasksToStorage();
 });
