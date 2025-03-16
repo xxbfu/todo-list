@@ -663,15 +663,52 @@ function showTaskDetails(task) {
 }
 
 // Show settings modal
+/**
+ * Zobrazení modálního okna nastavení
+ * 
+ * Inicializuje a zobrazuje modální okno s nastavením aplikace,
+ * včetně seznamu kategorií a barevné palety.
+ */
 function showSettingsModal() {
-    // Populate category list in settings
+    // Nejprve aktualizujeme pořadí kategorií dle aktuálního stavu
+    // Tím zajistíme, že se kategorie zobrazí ve správném pořadí
+    syncCategoryOrder();
+    
+    // Aktualizace seznamu kategorií v modálním okně
     updateSettingsCategoryList();
     
-    // Populate color palette
+    // Aktualizace barevné palety v nastavení
     updateColorPalette();
     
-    // Show modal
+    // Zobrazení modálního okna
     settingsModal.classList.add('show');
+}
+
+/**
+ * Synchronizace pořadí kategorií
+ * 
+ * Zajišťuje, že všechny existující kategorie jsou zahrnuty
+ * ve správném pořadí v seznamu categoryOrder a že neexistují
+ * duplicity nebo odkazy na smazané kategorie.
+ */
+function syncCategoryOrder() {
+    // Zjistíme všechny skutečné kategorie z objektu (kromě speciálních vlastností)
+    const allCategories = Object.keys(todoList).filter(key => 
+        key !== 'hotove' && key !== 'archiv' && key !== 'categoryOrder'
+    );
+    
+    // Vytvoříme nové pole pořadí, kde budou pouze existující kategorie
+    const newOrder = todoList.categoryOrder.filter(cat => allCategories.includes(cat));
+    
+    // Přidáme kategorie, které v pořadí ještě nejsou
+    allCategories.forEach(cat => {
+        if (!newOrder.includes(cat)) {
+            newOrder.push(cat);
+        }
+    });
+    
+    // Aktualizujeme pořadí kategorií
+    todoList.categoryOrder = newOrder;
 }
 
 // Update color palette in settings
@@ -803,13 +840,19 @@ function getCategoryDisplayName(categorySlug) {
         .replace(/_/g, ' '); // Nahradit podtržítka mezerami
 }
 
-// Update categories list in settings modal
+/**
+ * Aktualizace seznamu kategorií v nastavení
+ * 
+ * Zobrazuje seznam kategorií v modálním okně nastavení
+ * ve správném pořadí dle uživatelského nastavení.
+ */
 function updateSettingsCategoryList() {
     settingsCategoryList.innerHTML = '';
     
-    Object.keys(todoList).forEach(category => {
-        // Přeskočit speciální kategorie (hotove, archiv, categoryOrder)
-        if (category !== 'hotove' && category !== 'archiv' && category !== 'categoryOrder') {
+    // Použití uživatelského pořadí kategorií místo náhodného pořadí z Object.keys()
+    todoList.categoryOrder.forEach(category => {
+        // Přeskočit speciální kategorii 'hotove'
+        if (category !== 'hotove') {
             const li = document.createElement('li');
             li.className = 'settings-category-item';
             li.draggable = true;
@@ -1514,21 +1557,35 @@ function applyTheme() {
 }
 
 // Initialize the app when the DOM is loaded
+/**
+ * Inicializace aplikace při načtení stránky
+ * 
+ * Tato událost se spustí, když je DOM kompletně načten.
+ * Provádí kompletní inicializaci aplikace včetně načtení dat
+ * a nastavení všech potřebných event listenerů.
+ */
 document.addEventListener('DOMContentLoaded', function() {
-    // Load tasks and preferences
+    // Načtení barevných preferencí
     loadColorPreferences();
+    
+    // Základní inicializace aplikace
     init();
     
-    // Setup event listeners
+    // Synchronizace pořadí kategorií
+    syncCategoryOrder();
+    
+    // Nastavení všech dodatečných event listenerů
     setupAdditionalEventListeners();
+    
+    // Aplikace uloženého barevného schématu
     applyTheme();
     
-    // Update the category list based on order
+    // Aktualizace seznamu kategorií dle nastaveného pořadí
     updateCategoryList();
     
-    // Initialize the archive
+    // Inicializace archivu
     updateArchivedCategories();
     
-    // Save to ensure proper structure
+    // Uložení všech dat pro zajištění správné struktury
     saveTasksToStorage();
 });
