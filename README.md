@@ -14,7 +14,7 @@ Vítejte v naší interaktivní TODO List aplikaci! Jednoduchý, ale výkonný n
 
 ### 🎮 Hra Had
 - **Prokrastinační režim** - Vyzkoušejte klasickou hru Had, když potřebujete pauzu
-- **2-hráčový režim** - Soutěžte s kamarádem o to, kdo bude mít vyšší skóre
+- **2-hráčový režim** - Rozsekni nás - soutěžte s kamarádem o to, kdo bude dělat určený úkol
 - **Mobilní ovládání** - Hrajte pohodlně i na mobilních zařízeních
 - **Jednoduché ovládání** - Na mobilu stačí dvě tlačítka pro každého hráče
 
