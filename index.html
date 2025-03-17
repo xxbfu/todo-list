@@ -98,8 +98,6 @@
     <div id="snake-game-modal" class="modal">
         <div class="modal-content snake-modal-content">
             <span class="close-modal">&times;</span>
-            <h2>Hra Had</h2>
-            
             <div class="game-mode-selection">
                 <button id="single-player-btn" class="game-mode-btn active">Prokrastinace</button>
                 <button id="two-player-btn" class="game-mode-btn">Kdo z koho</button>
@@ -107,6 +105,16 @@
             <div class="game-mode-descriptions">
                 <p id="single-player-desc" class="game-mode-desc">Co nemusíš dělat dnes, odlož na zítra</p>
                 <p id="two-player-desc" class="game-mode-desc hidden">Soutěž o task: Vyhraj nebo udělej úkol</p>
+            </div>
+            
+            <!-- Mobilní ovládání pro modrého hada (nahoře) -->
+            <div class="mobile-touch-controls">
+                <div class="mobile-player1-controls simple-controls">
+                    <div class="mobile-controls-flex">
+                        <button class="mobile-control-btn" data-player="1" data-direction="left">←</button>
+                        <button class="mobile-control-btn" data-player="1" data-direction="right">→</button>
+                    </div>
+                </div>
             </div>
             
             <div class="snake-game-container">
@@ -118,12 +126,32 @@
             </div>
             
             <div class="game-controls">
-                <p><strong>Ovládání:</strong></p>
-                <p>Modrý had: Šipky (←↑→↓)</p>
-                <p>Červený had: Klávesy W, A, S, D</p>
+                <div class="control-instructions">
+                    <p><strong>Ovládání:</strong></p>
+                    <p>Modrý had: Šipky (←↑→↓)</p>
+                    <p>Červený had: Klávesy W, A, S, D</p>
+                </div>
+                
+                <div class="controls-toggle">
+                    <label>
+                        <input type="checkbox" id="show-controls-toggle">
+                        Hraju na mobilu
+                    </label>
+                </div>
+                
                 <div class="game-buttons">
                     <button id="start-game-btn">Začít hru</button>
                     <button id="restart-game-btn" class="hidden">Hrát znovu</button>
+                </div>
+                
+                <!-- Mobilní ovládání pro červeného hada (dole) -->
+                <div class="mobile-touch-controls">
+                    <div class="mobile-player2-controls simple-controls">
+                        <div class="mobile-controls-flex">
+                            <button class="mobile-control-btn" data-player="2" data-direction="left">←</button>
+                            <button class="mobile-control-btn" data-player="2" data-direction="right">→</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

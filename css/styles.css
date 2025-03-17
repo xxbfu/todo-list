@@ -827,6 +827,62 @@ h4 {
     z-index: 10;
 }
 
+/* Mobilní ovládání */
+.mobile-touch-controls {
+    display: none;
+    width: 100%;
+    max-width: 300px;
+    margin: 15px auto;
+}
+
+.mobile-controls-flex {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.mobile-control-btn {
+    flex: 1;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    height: 60px;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+}
+
+.simple-controls {
+    margin-bottom: 15px;
+}
+
+.controls-toggle {
+    display: none;
+    margin: 15px 0;
+}
+
+.controls-toggle label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.controls-toggle input[type="checkbox"] {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+}
+
+.control-instructions {
+    margin-bottom: 15px;
+}
+
 .game-over-message h3 {
     margin: 0 0 15px 0;
     color: white;
@@ -876,4 +932,101 @@ h4 {
 #modal-detail-text {
     white-space: pre-wrap;
     line-height: 1.5;
+}
+
+/* Media queries pro responzivní design */
+@media (max-width: 768px) {
+    .header-row {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    h1 {
+        margin-bottom: 15px;
+    }
+    
+    .category-nav ul {
+        justify-content: center;
+    }
+    
+    .category-nav li {
+        min-width: 80px;
+    }
+    
+    .add-task {
+        flex-direction: column;
+    }
+    
+    #new-task, #task-due-date, #add-task-btn {
+        width: 100%;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .color-selector {
+        justify-content: center;
+        margin: 10px 0;
+    }
+    
+    .completed-categories {
+        flex-direction: column;
+    }
+    
+    .completed-category-btn {
+        margin-bottom: 5px;
+    }
+    
+    /* Úpravy pro herní obrazovku */
+    .snake-modal-content {
+        padding: 15px;
+        max-height: 95vh;
+        overflow-y: auto;
+    }
+    
+    #snake-game-canvas {
+        max-width: 100%;
+        height: auto;
+        aspect-ratio: 1 / 1;
+    }
+    
+    .mobile-touch-controls {
+        display: none;
+    }
+    
+    .controls-toggle {
+        display: block;
+    }
+    
+    .control-instructions {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-nav li {
+        min-width: 70px;
+    }
+    
+    .category-link {
+        padding: 8px 5px;
+        font-size: 14px;
+    }
+    
+    .task-item {
+        padding: 8px;
+    }
+    
+    .task-inline-detail {
+        max-width: 240px;
+    }
+    
+    .archive-actions {
+        flex-direction: column;
+    }
+    
+    #archive-now-btn, #delete-archived-btn {
+        margin-bottom: 10px;
+        width: 100%;
+    }
 }

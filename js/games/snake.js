@@ -12,7 +12,7 @@ let snakeContext = null;      // Canvas kontext pro vykreslování
 let snakeGameActive = false;  // Flag zda hra běží
 let snakeGameMode = 'single'; // Režim hry - 'single' nebo 'two-player'
 let gameLoopInterval = null;  // Interval herního cyklu
-let gameSpeed = 100;          // Rychlost hry v ms (nižší = rychlejší)
+let gameSpeed = 110;          // Rychlost hry v ms (nižší = rychlejší)
 
 // Herní objekty
 let snake1 = null;            // Modrý had
@@ -56,6 +56,17 @@ function initSnakeGame() {
     document.getElementById('start-game-btn').addEventListener('click', startSnakeGame);
     document.getElementById('restart-game-btn').addEventListener('click', restartSnakeGame);
     
+    // Nastavení event listeneru pro přepínání zobrazení ovládacích tlačítek
+    const showControlsToggle = document.getElementById('show-controls-toggle');
+    if (showControlsToggle) {
+        showControlsToggle.addEventListener('change', function() {
+            updateControlsVisibility();
+        });
+    }
+    
+    // Nastavení event listenerů pro mobilní ovládání
+    setupMobileControls();
+    
     // Nastavení event listeneru pro zobrazení modálního okna
     // Tento event je už nastaven v hlavním souboru app.js
     
@@ -77,6 +88,119 @@ function _showSnakeGameScreen() {
 }
 
 /**
+ * Nastavení event listenerů pro mobilní ovládání
+ */
+function setupMobileControls() {
+    // Najít všechna mobilní tlačítka ovládání
+    const mobileButtons = document.querySelectorAll('.mobile-control-btn');
+    
+    // Přidat event listenery ke každému tlačítku
+    mobileButtons.forEach(button => {
+        ['mousedown', 'touchstart'].forEach(eventType => {
+            button.addEventListener(eventType, function(e) {
+                e.preventDefault(); // Zabránit výchozímu chování (např. scrollování při dotyku)
+                
+                const player = this.getAttribute('data-player');
+                const direction = this.getAttribute('data-direction');
+                
+                if (!snakeGameActive) return;
+                
+                // Ovládání hada v závislosti na hráči
+                if (player === '1') {
+                    handleMobileDirection(snake1, direction);
+                } else if (player === '2' && snakeGameMode === 'two-player') {
+                    handleMobileDirection(snake2, direction);
+                }
+            });
+        });
+    });
+}
+
+/**
+ * Zpracování mobilního ovládání hada (relativní změna směru)
+ * 
+ * @param {Object} snake - Instance hada, kterého ovládáme
+ * @param {string} turn - Směr otočení ('left' nebo 'right')
+ */
+function handleMobileDirection(snake, turn) {
+    // Mapování směrů pro otáčení doleva
+    const turnLeftMap = {
+        'up': 'left',
+        'left': 'down',
+        'down': 'right',
+        'right': 'up'
+    };
+    
+    // Mapování směrů pro otáčení doprava
+    const turnRightMap = {
+        'up': 'right',
+        'right': 'down',
+        'down': 'left',
+        'left': 'up'
+    };
+    
+    if (turn === 'left') {
+        // Otočení doleva o 90°
+        const newDirection = turnLeftMap[snake.direction];
+        
+        // Kontrola, že nový směr není opačný k aktuálnímu
+        const oppositeDir = getOppositeDirection(snake.direction);
+        if (newDirection !== oppositeDir) {
+            snake.nextDirection = newDirection;
+        }
+    } 
+    else if (turn === 'right') {
+        // Otočení doprava o 90°
+        const newDirection = turnRightMap[snake.direction];
+        
+        // Kontrola, že nový směr není opačný k aktuálnímu
+        const oppositeDir = getOppositeDirection(snake.direction);
+        if (newDirection !== oppositeDir) {
+            snake.nextDirection = newDirection;
+        }
+    }
+}
+
+/**
+ * Vrací opačný směr k zadanému směru
+ * 
+ * @param {string} direction - Vstupní směr
+ * @returns {string} Opačný směr
+ */
+function getOppositeDirection(direction) {
+    switch (direction) {
+        case 'up': return 'down';
+        case 'down': return 'up';
+        case 'left': return 'right';
+        case 'right': return 'left';
+        default: return '';
+    }
+}
+
+/**
+ * Aktualizace viditelnosti ovládacích prvků podle nastavení 
+ */
+function updateControlsVisibility() {
+    const mobileToggle = document.getElementById('show-controls-toggle');
+    if (!mobileToggle) return;
+    
+    const isMobileMode = mobileToggle.checked;
+    const mobileControls = document.querySelectorAll('.mobile-touch-controls');
+    
+    // Aktualizace viditelnosti dle režimu
+    mobileControls.forEach(control => {
+        // Přepnout zobrazení podle stavu checkboxu
+        control.style.display = isMobileMode ? 'block' : 'none';
+        
+        // Pro 1-hráčový režim skrýt ovládání pro druhého hráče
+        const isPlayer2Control = control.querySelector('.mobile-player2-controls');
+        if (isPlayer2Control && snakeGameMode === 'single') {
+            control.style.display = 'none';
+        }
+    });
+}
+
+/**
  * Nastavení herního režimu (jeden/dva hráči)
  * 
  * @param {string} mode - 'single' nebo 'two-player'
@@ -95,6 +219,9 @@ function setGameMode(mode) {
     // Zobrazení/skrytí odpovídajícího popisku režimu
     document.getElementById('single-player-desc').classList.toggle('hidden', mode !== 'single');
     document.getElementById('two-player-desc').classList.toggle('hidden', mode !== 'two-player');
+    
+    // Aktualizace viditelnosti ovládacích prvků
+    updateControlsVisibility();
     
     // Pokud je hra aktivní, restartujeme ji při změně režimu
     if (snakeGameActive) {
@@ -124,6 +251,9 @@ function startSnakeGame() {
     // Update UI
     document.getElementById('start-game-btn').classList.add('hidden');
     document.getElementById('restart-game-btn').classList.remove('hidden');
+    
+    // Aktualizace viditelnosti mobilních ovládacích prvků
+    updateControlsVisibility();
     
     // Odstranění game over zprávy, pokud existuje
     const gameOverMessage = document.querySelector('.game-over-message');
