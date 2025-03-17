@@ -2,16 +2,24 @@
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TODO List</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Můj TODO List</h1>
+        <div class="header-row">
+            <h1>Můj TODO List</h1>
+            <div class="header-buttons">
+                <button id="theme-toggle" class="theme-toggle">🌙</button>
+                <button id="snake-game-toggle" class="snake-game-toggle">🐍</button>
+                <button id="settings-toggle" class="settings-toggle">⚙️</button>
+            </div>
+        </div>
         
         <nav class="category-nav">
-            <ul>
+            <ul id="category-list">
                 <li><a href="#" class="category-link active" data-category="prioritni">Prioritní</a></li>
                 <li><a href="#" class="category-link" data-category="prace">Práce</a></li>
                 <li><a href="#" class="category-link" data-category="zabava">Zábava</a></li>
@@ -22,8 +30,19 @@
         <div class="task-container">
             <div id="active-category-tasks">
                 <div class="add-task">
+                    <div class="color-selector">
+                        <button class="color-btn" data-color="#ffcccb" style="background-color: #ffcccb;"></button>
+                        <button class="color-btn" data-color="#c1e1c1" style="background-color: #c1e1c1;"></button>
+                        <button class="color-btn" data-color="#c4c3d0" style="background-color: #c4c3d0;"></button>
+                        <button class="color-btn" data-color="#add8e6" style="background-color: #add8e6;"></button>
+                        <button class="color-btn active" data-color="" style="background-color: #f5f5f5;"></button>
+                    </div>
                     <input type="text" id="new-task" placeholder="Zadejte nový úkol...">
+                    <input type="date" id="task-due-date">
                     <button id="add-task-btn">Přidat</button>
+                </div>
+                <div class="task-detail-area">
+                    <textarea id="task-detail" placeholder="Detail úkolu (nepovinné)..." rows="2"></textarea>
                 </div>
                 <ul id="task-list" class="task-list">
                     <!-- Tasks will be added here dynamically -->
@@ -37,9 +56,178 @@
                     <button class="completed-category-btn" data-category="prace">Práce</button>
                     <button class="completed-category-btn" data-category="zabava">Zábava</button>
                 </div>
+                <div class="completed-actions">
+                    <button id="delete-all-completed-btn" class="danger-btn">Smazat všechny hotové</button>
+                </div>
                 <ul id="completed-task-list" class="task-list">
                     <!-- Completed tasks will be added here dynamically -->
                 </ul>
+                
+                <div class="archive-section">
+                    <h3 class="archive-toggle">Archiv smazaných kategorií <span class="toggle-icon">+</span></h3>
+                    <div class="archive-content hidden">
+                        <div class="archived-categories">
+                            <!-- Archived categories will be added dynamically -->
+                        </div>
+                        <ul id="archived-task-list" class="task-list">
+                            <!-- Archived tasks will be added here dynamically -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modální okno pro detail úkolu -->
+    <div id="task-detail-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-task-title">Název úkolu</h2>
+            <div id="modal-task-dates">
+                <div id="modal-date-created">Vytvořeno: <span></span></div>
+                <div id="modal-date-due">Termín: <span></span></div>
+                <div id="modal-date-completed" class="hidden">Dokončeno: <span></span></div>
+            </div>
+            <div id="modal-task-detail">
+                <p id="modal-detail-text"></p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modální okno pro hru Had -->
+    <div id="snake-game-modal" class="modal">
+        <div class="modal-content snake-modal-content">
+            <span class="close-modal">&times;</span>
+            <div class="game-mode-selection">
+                <button id="single-player-btn" class="game-mode-btn active">Prokrastinace</button>
+                <button id="two-player-btn" class="game-mode-btn">Kdo z koho</button>
+            </div>
+            <div class="game-mode-descriptions">
+                <p id="single-player-desc" class="game-mode-desc">Co nemusíš dělat dnes, odlož na zítra</p>
+                <p id="two-player-desc" class="game-mode-desc hidden">Soutěž o task: Vyhraj nebo udělej úkol</p>
+            </div>
+            
+            <!-- Mobilní ovládání pro modrého hada (nahoře) -->
+            <div class="mobile-touch-controls">
+                <div class="mobile-player1-controls simple-controls">
+                    <div class="mobile-controls-flex">
+                        <button class="mobile-control-btn" data-player="1" data-direction="left">←</button>
+                        <button class="mobile-control-btn" data-player="1" data-direction="right">→</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="snake-game-container">
+                <canvas id="snake-game-canvas"></canvas>
+                <div class="game-info">
+                    <div id="player1-score">Modrý: 0</div>
+                    <div id="player2-score" class="hidden">Červený: 0</div>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <div class="control-instructions">
+                    <p><strong>Ovládání:</strong></p>
+                    <p>Modrý had: Šipky (←↑→↓)</p>
+                    <p>Červený had: Klávesy W, A, S, D</p>
+                </div>
+                
+                <div class="controls-toggle">
+                    <label>
+                        <input type="checkbox" id="show-controls-toggle">
+                        Hraju na mobilu
+                    </label>
+                </div>
+                
+                <!-- Mobilní ovládání pro červeného hada (dole) -->
+                <div class="mobile-touch-controls">
+                    <div class="mobile-player2-controls simple-controls">
+                        <div class="mobile-controls-flex">
+                            <button class="mobile-control-btn" data-player="2" data-direction="left">←</button>
+                            <button class="mobile-control-btn" data-player="2" data-direction="right">→</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="game-buttons">
+                    <button id="start-game-btn">Začít hru</button>
+                    <button id="restart-game-btn" class="hidden">Hrát znovu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modální okno pro nastavení -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Nastavení</h2>
+            
+            <div class="settings-section">
+                <h3>Správa kategorií</h3>
+                <div class="category-management">
+                    <input type="text" id="new-category" placeholder="Nová kategorie...">
+                    <button id="add-category-btn">Přidat</button>
+                </div>
+                <div class="category-list-container">
+                    <ul id="settings-category-list" class="settings-categories">
+                        <!-- Kategorie se načtou dynamicky -->
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Výběr barev pro úkoly</h3>
+                <div class="color-positions">
+                    <div class="color-position-selectors">
+                        <button class="color-position" data-position="0">1</button>
+                        <button class="color-position" data-position="1">2</button>
+                        <button class="color-position" data-position="2">3</button>
+                        <button class="color-position" data-position="3">4</button>
+                        <button class="color-position" data-position="4">5</button>
+                    </div>
+                    <div class="position-preview">
+                        <div class="selected-position-color"></div>
+                        <div>Vybraná pozice: <span id="position-number">1</span></div>
+                    </div>
+                </div>
+                <div class="color-palette">
+                    <!-- Barvy budou přidány dynamicky -->
+                </div>
+                <div class="color-hint">
+                    <p>Poznámka: Poslední pozice bude vždy "bez barvy" nezávisle na výběru.</p>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Nastavení archivace</h3>
+                <div class="archive-settings">
+                    <div class="archive-option">
+                        <input type="checkbox" id="archive-enabled" checked>
+                        <label for="archive-enabled">Povolit automatickou archivaci</label>
+                    </div>
+                    
+                    <div class="archive-interval">
+                        <label for="archive-days">Automaticky archivovat hotové úkoly po:</label>
+                        <div class="archive-input-group">
+                            <input type="number" id="archive-days" min="1" max="365" value="30">
+                            <span class="archive-unit">dnech</span>
+                        </div>
+                    </div>
+                    
+                    <div class="archive-interval">
+                        <label for="delete-days">Trvale smazat z archivu po:</label>
+                        <div class="archive-input-group">
+                            <input type="number" id="delete-days" min="1" max="365" value="90">
+                            <span class="archive-unit">dnech</span>
+                        </div>
+                    </div>
+                    
+                    <div class="archive-actions">
+                        <button id="archive-now-btn">Archivovat nyní</button>
+                        <button id="delete-archived-btn">Smazat staré z archivu</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
