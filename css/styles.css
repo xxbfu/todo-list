@@ -862,6 +862,13 @@ h4 {
     margin-bottom: 15px;
 }
 
+/* Zajistí, že horní i dolní ovládací prvky mají stejnou velikost */
+.mobile-player1-controls .mobile-control-btn,
+.mobile-player2-controls .mobile-control-btn {
+    height: 60px;
+    font-size: 24px;
+}
+
 .controls-toggle {
     display: none;
     margin: 15px 0;
